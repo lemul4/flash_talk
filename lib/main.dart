@@ -23,6 +23,8 @@ class _TranslationPageState extends State<TranslationPage> {
   String inputText = '';
   String translatedText = '';
   bool isSwapped = false;
+  bool isButton1Pressed = false;
+  bool isButton2Pressed = false;
 
   int _currentIndex = 0;
 
@@ -113,11 +115,34 @@ class _TranslationPageState extends State<TranslationPage> {
               ),
               child: SingleChildScrollView(
                 child: Text(
-                  inputText.isNotEmpty ? inputText : 'Здесь будет перевод',
+                  translatedText.isNotEmpty ? translatedText : 'Здесь будет перевод',
                   style: TextStyle(fontSize: 18.0),
                 ),
               ),
             ),
+          ),
+          SizedBox(height: 16.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              _buildIconButton(
+                icon: isButton1Pressed ? Icons.stop : Icons.volume_up,
+                onPressed: () {
+                  setState(() {
+                    isButton1Pressed = !isButton1Pressed;
+                  });
+                },
+              ),
+              SizedBox(width: 16.0),
+              _buildIconButton(
+                icon: isButton2Pressed ? Icons.stop : Icons.highlight,
+                onPressed: () {
+                  setState(() {
+                    isButton2Pressed = !isButton2Pressed;
+                  });
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -136,6 +161,30 @@ class _TranslationPageState extends State<TranslationPage> {
           child: Text(
             language,
             style: TextStyle(fontSize: 16.0),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8.0),
+        child: Container(
+          padding: EdgeInsets.all(8.0),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.white),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
           ),
         ),
       ),
