@@ -39,13 +39,13 @@ class _DecodingPageState extends State<DecodingPage> {
 
           switch (index) {
             case 0:
-              context.router.push(TranslationRoute());
+              context.router.navigate(TranslationRoute());
               break;
             case 1:
-              context.router.push(DecodingRoute());
+              context.router.navigate(DecodingRoute());
               break;
             case 2:
-              context.router.push(OptionsRoute());
+              context.router.navigate(OptionsRoute());
               break;
           }
         },

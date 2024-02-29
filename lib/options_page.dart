@@ -29,14 +29,11 @@ class _OptionsPageState extends State<OptionsPage> {
 
           switch (index) {
             case 0:
-              context.router.push(TranslationRoute());
-              break;
+              context.router.navigate(TranslationRoute());
             case 1:
-              context.router.push(DecodingRoute());
-              break;
+              context.router.navigate(DecodingRoute());
             case 2:
-              context.router.push(OptionsRoute());
-              break;
+              context.router.navigate(OptionsRoute());
           }
         },
         items: [
