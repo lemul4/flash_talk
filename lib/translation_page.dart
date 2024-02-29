@@ -3,16 +3,20 @@ import 'package:flutter/material.dart';
 import 'decoding.dart';
 import 'package:auto_route/auto_route.dart';
 import 'router.dart';
+class _SavedTranslationVariables {
+  static String inputText = '';
+  static String translatedText = '';
+  static bool isSwapped = false;
+}
 @RoutePage()
 class TranslationPage extends StatefulWidget {
+  const TranslationPage({super.key});
+
   @override
   _TranslationPageState createState() => _TranslationPageState();
 }
 
 class _TranslationPageState extends State<TranslationPage> {
-  String inputText = '';
-  String translatedText = '';
-  bool isSwapped = false;
 
   @override
   Widget build(BuildContext context) {
@@ -23,10 +27,10 @@ class _TranslationPageState extends State<TranslationPage> {
       ),
       body: buildTranslationBody(),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: SharedVariables.currentIndex,  // Use the shared variable
+        currentIndex: SharedVariables.currentIndex,
         onTap: (index) {
           setState(() {
-            SharedVariables.currentIndex = index;  // Update the shared variable
+            SharedVariables.currentIndex = index;
           });
 
           switch (index) {
@@ -67,16 +71,16 @@ class _TranslationPageState extends State<TranslationPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildLanguageSelector(isSwapped ? 'Русский' : 'Морзе'),
+              _buildLanguageSelector(_SavedTranslationVariables.isSwapped ? 'Русский' : 'Морзе'),
               IconButton(
                 icon: Icon(Icons.swap_horiz),
                 onPressed: () {
                   setState(() {
-                    isSwapped = !isSwapped;
+                    _SavedTranslationVariables.isSwapped = !_SavedTranslationVariables.isSwapped;
                   });
                 },
               ),
-              _buildLanguageSelector(isSwapped ? 'Морзе' : 'Русский'),
+              _buildLanguageSelector(_SavedTranslationVariables.isSwapped ? 'Морзе' : 'Русский'),
             ],
           ),
           SizedBox(height: 16.0),
@@ -84,10 +88,10 @@ class _TranslationPageState extends State<TranslationPage> {
             child: TextField(
               onChanged: (text) {
                 setState(() {
-                  inputText = text;
+                  _SavedTranslationVariables.inputText = text;
                 });
               },
-              controller: TextEditingController(text: inputText),
+              controller: TextEditingController(text: _SavedTranslationVariables.inputText),
               maxLines: null,
               expands: true,
               style: TextStyle(fontSize: 18.0),
@@ -97,7 +101,7 @@ class _TranslationPageState extends State<TranslationPage> {
                   icon: Icon(Icons.clear),
                   onPressed: () {
                     setState(() {
-                      inputText = '';
+                      _SavedTranslationVariables.inputText = '';
                     });
                   },
                 ),
@@ -114,7 +118,7 @@ class _TranslationPageState extends State<TranslationPage> {
               ),
               child: SingleChildScrollView(
                 child: Text(
-                  inputText.isNotEmpty ? inputText : 'Здесь будет перевод',
+                  _SavedTranslationVariables.inputText.isNotEmpty ? _SavedTranslationVariables.inputText : 'Здесь будет перевод',
                   style: TextStyle(fontSize: 18.0),
                 ),
               ),

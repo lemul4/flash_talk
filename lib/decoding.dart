@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flash_talk/translation_page.dart';
+class _SavedDecodingVariables{
+  static double sensitivityValue = 25.0;
+  static String decodingText = "Здесь будет находиться декодированный текст";
+}
 
 @RoutePage()
 class DecodingPage extends StatefulWidget {
@@ -12,10 +16,8 @@ class DecodingPage extends StatefulWidget {
 }
 
 class _DecodingPageState extends State<DecodingPage> {
-  String constantlyUpdatingText = 'Текст, который обновляется постоянно';
   bool isDecodingFlashesActive = false;
   bool isDecodingBlinksActive = false;
-  double sensitivityValue = 25.0;
 
   @override
   Widget build(BuildContext context) {
@@ -26,10 +28,10 @@ class _DecodingPageState extends State<DecodingPage> {
       ),
       body: buildDecodingBody(),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: SharedVariables.currentIndex,  // Use the shared variable
+        currentIndex: SharedVariables.currentIndex,
         onTap: (index) {
           setState(() {
-            SharedVariables.currentIndex = index;  // Update the shared variable
+            SharedVariables.currentIndex = index;
           });
 
           switch (index) {
@@ -89,7 +91,7 @@ class _DecodingPageState extends State<DecodingPage> {
                   Expanded(
                     child: SingleChildScrollView(
                       child: Text(
-                        constantlyUpdatingText,
+                        _SavedDecodingVariables.decodingText,
                         style: TextStyle(fontSize: 18.0),
                       ),
                     ),
@@ -101,14 +103,14 @@ class _DecodingPageState extends State<DecodingPage> {
                         onPressed: () {
                           // Обнулить constantlyUpdatingText
                           setState(() {
-                            constantlyUpdatingText = "";
+                            _SavedDecodingVariables.decodingText = "";
                           });
                         },
                       ),
                       IconButton(
                         icon: Icon(Icons.copy),
                         onPressed: () {
-                          Clipboard.setData(ClipboardData(text: constantlyUpdatingText));
+                          Clipboard.setData(ClipboardData(text:  _SavedDecodingVariables.decodingText));
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('Текст скопирован в буфер обмена'),
@@ -146,20 +148,19 @@ class _DecodingPageState extends State<DecodingPage> {
             ],
           ),
           const SizedBox(height: 16.0),
-          // Добавление слайдера
           Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                'Чувствительность ${sensitivityValue.toInt()}м',
+                'Чувствительность ${ _SavedDecodingVariables.sensitivityValue.toInt()}м',
               ),
               Slider(
-                value: sensitivityValue,
+                value:  _SavedDecodingVariables.sensitivityValue,
                 min: 1.0,
                 max: 50.0,
                 onChanged: (value) {
                   setState(() {
-                    sensitivityValue = value;
+                    _SavedDecodingVariables.sensitivityValue = value;
                   });
                 },
               ),
