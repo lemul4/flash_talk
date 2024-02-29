@@ -3,11 +3,14 @@ import 'package:flutter/material.dart';
 import 'decoding.dart';
 import 'package:auto_route/auto_route.dart';
 import 'router.dart';
+import 'package:flutter/services.dart';
+
 class _SavedTranslationVariables {
   static String inputText = '';
   static String translatedText = '';
   static bool isSwapped = false;
 }
+
 @RoutePage()
 class TranslationPage extends StatefulWidget {
   const TranslationPage({super.key});
@@ -17,6 +20,8 @@ class TranslationPage extends StatefulWidget {
 }
 
 class _TranslationPageState extends State<TranslationPage> {
+  bool isButton1Pressed = false;
+  bool isButton2Pressed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +46,7 @@ class _TranslationPageState extends State<TranslationPage> {
               context.router.push(DecodingRoute());
               break;
             case 2:
+              context.router.push(OptionsRoute());
               break;
           }
         },
@@ -71,16 +77,19 @@ class _TranslationPageState extends State<TranslationPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildLanguageSelector(_SavedTranslationVariables.isSwapped ? 'Русский' : 'Морзе'),
+              _buildLanguageSelector(
+                  _SavedTranslationVariables.isSwapped ? 'Русский' : 'Морзе'),
               IconButton(
                 icon: Icon(Icons.swap_horiz),
                 onPressed: () {
                   setState(() {
-                    _SavedTranslationVariables.isSwapped = !_SavedTranslationVariables.isSwapped;
+                    _SavedTranslationVariables.isSwapped =
+                        !_SavedTranslationVariables.isSwapped;
                   });
                 },
               ),
-              _buildLanguageSelector(_SavedTranslationVariables.isSwapped ? 'Морзе' : 'Русский'),
+              _buildLanguageSelector(
+                  _SavedTranslationVariables.isSwapped ? 'Морзе' : 'Русский'),
             ],
           ),
           SizedBox(height: 16.0),
@@ -91,7 +100,8 @@ class _TranslationPageState extends State<TranslationPage> {
                   _SavedTranslationVariables.inputText = text;
                 });
               },
-              controller: TextEditingController(text: _SavedTranslationVariables.inputText),
+              controller: TextEditingController(
+                  text: _SavedTranslationVariables.inputText),
               maxLines: null,
               expands: true,
               style: TextStyle(fontSize: 18.0),
@@ -111,18 +121,66 @@ class _TranslationPageState extends State<TranslationPage> {
           SizedBox(height: 16.0),
           Expanded(
             child: Container(
-              padding: EdgeInsets.fromLTRB(8, 8, 50, 8),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: Colors.grey[800],
                 borderRadius: BorderRadius.circular(8.0),
               ),
-              child: SingleChildScrollView(
-                child: Text(
-                  _SavedTranslationVariables.inputText.isNotEmpty ? _SavedTranslationVariables.inputText : 'Здесь будет перевод',
-                  style: TextStyle(fontSize: 18.0),
-                ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Text(
+                        _SavedTranslationVariables.inputText.isNotEmpty
+                            ? _SavedTranslationVariables.inputText
+                            : 'Здесь будет перевод',
+                        style: TextStyle(fontSize: 18.0),
+                      ),
+                    ),
+                  ),
+                  Column(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.copy),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(
+                              text: _SavedTranslationVariables.inputText));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Текст скопирован в буфер обмена'),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
+          ),
+          SizedBox(height: 16.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              _buildIconButton(
+                icon: isButton1Pressed ? Icons.stop : Icons.volume_up,
+                onPressed: () {
+                  setState(() {
+                    isButton1Pressed = !isButton1Pressed;
+                  });
+                },
+              ),
+              SizedBox(width: 16.0),
+              _buildIconButton(
+                icon: isButton2Pressed ? Icons.stop : Icons.highlight,
+                onPressed: () {
+                  setState(() {
+                    isButton2Pressed = !isButton2Pressed;
+                  });
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -141,6 +199,30 @@ class _TranslationPageState extends State<TranslationPage> {
           child: Text(
             language,
             style: TextStyle(fontSize: 16.0),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8.0),
+        child: Container(
+          padding: EdgeInsets.all(8.0),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.white),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
           ),
         ),
       ),

@@ -18,13 +18,19 @@ abstract class _$AppRouter extends RootStackRouter {
     DecodingRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
-        child: DecodingPage(),
+        child: const DecodingPage(),
+      );
+    },
+    OptionsRoute.name: (routeData) {
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: const OptionsPage(),
       );
     },
     TranslationRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
-        child: TranslationPage(),
+        child: const TranslationPage(),
       );
     },
   };
@@ -40,6 +46,20 @@ class DecodingRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'DecodingRoute';
+
+  static const PageInfo<void> page = PageInfo<void>(name);
+}
+
+/// generated route for
+/// [OptionsPage]
+class OptionsRoute extends PageRouteInfo<void> {
+  const OptionsRoute({List<PageRouteInfo>? children})
+      : super(
+          OptionsRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'OptionsRoute';
 
   static const PageInfo<void> page = PageInfo<void>(name);
 }

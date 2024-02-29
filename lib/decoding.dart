@@ -4,13 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flash_talk/translation_page.dart';
-class _SavedDecodingVariables{
+
+class _SavedDecodingVariables {
   static double sensitivityValue = 25.0;
   static String decodingText = "Здесь будет находиться декодированный текст";
 }
 
 @RoutePage()
 class DecodingPage extends StatefulWidget {
+  const DecodingPage({super.key});
+
   @override
   _DecodingPageState createState() => _DecodingPageState();
 }
@@ -42,6 +45,7 @@ class _DecodingPageState extends State<DecodingPage> {
               context.router.push(DecodingRoute());
               break;
             case 2:
+              context.router.push(OptionsRoute());
               break;
           }
         },
@@ -110,7 +114,8 @@ class _DecodingPageState extends State<DecodingPage> {
                       IconButton(
                         icon: Icon(Icons.copy),
                         onPressed: () {
-                          Clipboard.setData(ClipboardData(text:  _SavedDecodingVariables.decodingText));
+                          Clipboard.setData(ClipboardData(
+                              text: _SavedDecodingVariables.decodingText));
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('Текст скопирован в буфер обмена'),
@@ -120,7 +125,6 @@ class _DecodingPageState extends State<DecodingPage> {
                       ),
                     ],
                   ),
-
                 ],
               ),
             ),
@@ -133,16 +137,16 @@ class _DecodingPageState extends State<DecodingPage> {
                 onPressed: isDecodingBlinksActive
                     ? null
                     : () {
-                  startDecodingBlinks();
-                },
+                        startDecodingBlinks();
+                      },
                 child: Text('Моргания'),
               ),
               ElevatedButton(
                 onPressed: isDecodingFlashesActive
                     ? null
                     : () {
-                  startDecodingFlashes();
-                },
+                        startDecodingFlashes();
+                      },
                 child: Text('Вспышки'),
               ),
             ],
@@ -152,10 +156,10 @@ class _DecodingPageState extends State<DecodingPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                'Чувствительность ${ _SavedDecodingVariables.sensitivityValue.toInt()}м',
+                'Чувствительность ${_SavedDecodingVariables.sensitivityValue.toInt()}м',
               ),
               Slider(
-                value:  _SavedDecodingVariables.sensitivityValue,
+                value: _SavedDecodingVariables.sensitivityValue,
                 min: 1.0,
                 max: 50.0,
                 onChanged: (value) {
@@ -174,7 +178,8 @@ class _DecodingPageState extends State<DecodingPage> {
   void startDecodingBlinks() {
     setState(() {
       isDecodingBlinksActive = true;
-      isDecodingFlashesActive = false; // Останавливаем другую функцию, если активна
+      isDecodingFlashesActive =
+          false; // Останавливаем другую функцию, если активна
     });
     // Добавьте вашу логику для Декодирования морганий
     // При окончании выполнения функции установите isDecodingBlinksActive = false
@@ -183,7 +188,8 @@ class _DecodingPageState extends State<DecodingPage> {
   void startDecodingFlashes() {
     setState(() {
       isDecodingFlashesActive = true;
-      isDecodingBlinksActive = false; // Останавливаем другую функцию, если активна
+      isDecodingBlinksActive =
+          false; // Останавливаем другую функцию, если активна
     });
     // Добавьте вашу логику для Декодирования вспышек
     // При окончании выполнения функции установите isDecodingFlashesActive = false
