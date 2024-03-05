@@ -4,6 +4,7 @@ import 'decoding.dart';
 import 'package:auto_route/auto_route.dart';
 import 'router.dart';
 import 'package:flutter/services.dart';
+import 'russian_morse_dictionary.dart';
 
 class _SavedTranslationVariables {
   static String inputText = '';
@@ -98,10 +99,17 @@ class _TranslationPageState extends State<TranslationPage> {
               onChanged: (text) {
                 setState(() {
                   _SavedTranslationVariables.inputText = text;
+                  _SavedTranslationVariables.translatedText = translateToMorse(text);
                 });
               },
-              controller: TextEditingController(
-                  text: _SavedTranslationVariables.inputText),
+              controller: TextEditingController.fromValue(
+                TextEditingValue(
+                  text: _SavedTranslationVariables.inputText,
+                  selection: TextSelection.fromPosition(
+                    TextPosition(offset: _SavedTranslationVariables.inputText.length),
+                  ),
+                ),
+              ),
               maxLines: null,
               expands: true,
               style: TextStyle(fontSize: 18.0),
@@ -112,13 +120,14 @@ class _TranslationPageState extends State<TranslationPage> {
                   onPressed: () {
                     setState(() {
                       _SavedTranslationVariables.inputText = '';
+                      _SavedTranslationVariables.translatedText = '';
                     });
                   },
                 ),
               ),
             ),
           ),
-          SizedBox(height: 16.0),
+          const SizedBox(height: 16.0),
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(8),
@@ -132,8 +141,8 @@ class _TranslationPageState extends State<TranslationPage> {
                   Expanded(
                     child: SingleChildScrollView(
                       child: Text(
-                        _SavedTranslationVariables.inputText.isNotEmpty
-                            ? _SavedTranslationVariables.inputText
+                        _SavedTranslationVariables.translatedText.isNotEmpty
+                            ? _SavedTranslationVariables.translatedText
                             : 'Здесь будет перевод',
                         style: TextStyle(fontSize: 18.0),
                       ),
@@ -145,7 +154,7 @@ class _TranslationPageState extends State<TranslationPage> {
                         icon: Icon(Icons.copy),
                         onPressed: () {
                           Clipboard.setData(ClipboardData(
-                              text: _SavedTranslationVariables.inputText));
+                              text: _SavedTranslationVariables.translatedText));
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('Текст скопирован в буфер обмена'),
@@ -159,7 +168,7 @@ class _TranslationPageState extends State<TranslationPage> {
               ),
             ),
           ),
-          SizedBox(height: 16.0),
+          const SizedBox(height: 16.0),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -171,7 +180,7 @@ class _TranslationPageState extends State<TranslationPage> {
                   });
                 },
               ),
-              SizedBox(width: 16.0),
+              const SizedBox(width: 16.0),
               _buildIconButton(
                 icon: isButton2Pressed ? Icons.stop : Icons.highlight,
                 onPressed: () {
@@ -228,4 +237,25 @@ class _TranslationPageState extends State<TranslationPage> {
       ),
     );
   }
+
+
+  String translateToMorse(String text) {
+    text = text.toUpperCase();
+
+    List<String> morseList = [];
+    for (int i = 0; i < text.length; i++) {
+      String char = text[i];
+      if (RussianMorseDictionary.rusToMorse.containsKey(char)) {
+        morseList.add(RussianMorseDictionary.rusToMorse[char]!);
+      } else if (char == ' ') {
+        morseList.add(' ');
+      }
+    }
+    morseList = morseList.map((morse) {
+      return morse.replaceAll('-', '—').replaceAll('.', '●');
+    }).toList();
+
+    return morseList.join(' ');
+  }
+
 }
