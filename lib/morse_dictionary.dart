@@ -1,5 +1,5 @@
 class MorseDictionary {
-  static Map<String, String> _rusToMorse = {
+  static const Map<String, String> _rusToMorse = {
     'А': '.-',
     'Б': '-...',
     'В': '.--',
@@ -45,7 +45,7 @@ class MorseDictionary {
     '9': '----.',
     ' ': '/',
   };
-  static Map<String, String> _engToMorse = {
+  static const Map<String, String> _engToMorse = {
     'A': '.-',
     'B': '-...',
     'C': '-.-.',
@@ -84,10 +84,10 @@ class MorseDictionary {
     '9': '----.',
     ' ': '/',
   };
-  static Map<String, String> _morseToRus = Map.fromEntries(
+  static final Map<String, String> _morseToRus = Map.fromEntries(
       _rusToMorse.entries.map((entry) => MapEntry(entry.value, entry.key)));
 
-  static Map<String, String> _morseToEng = Map.fromEntries(
+  static final Map<String, String> _morseToEng = Map.fromEntries(
       _engToMorse.entries.map((entry) => MapEntry(entry.value, entry.key)));
 
   static Map<String, String> getMorseMap(String language) {
