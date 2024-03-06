@@ -39,13 +39,13 @@ class _DecodingPageState extends State<DecodingPage> {
 
           switch (index) {
             case 0:
-              context.router.navigate(TranslationRoute());
+              context.router.navigate(const TranslationRoute());
               break;
             case 1:
-              context.router.navigate(DecodingRoute());
+              context.router.navigate(const DecodingRoute());
               break;
             case 2:
-              context.router.navigate(OptionsRoute());
+              context.router.navigate(const OptionsRoute());
               break;
           }
         },
@@ -96,14 +96,14 @@ class _DecodingPageState extends State<DecodingPage> {
                     child: SingleChildScrollView(
                       child: Text(
                         _SavedDecodingVariables.decodingText,
-                        style: TextStyle(fontSize: 18.0),
+                        style: const TextStyle(fontSize: 18.0),
                       ),
                     ),
                   ),
                   Column(
                     children: [
                       IconButton(
-                        icon: Icon(Icons.clear),
+                        icon: const Icon(Icons.clear),
                         onPressed: () {
                           // Обнулить constantlyUpdatingText
                           setState(() {
@@ -112,12 +112,12 @@ class _DecodingPageState extends State<DecodingPage> {
                         },
                       ),
                       IconButton(
-                        icon: Icon(Icons.copy),
+                        icon: const Icon(Icons.copy),
                         onPressed: () {
                           Clipboard.setData(ClipboardData(
                               text: _SavedDecodingVariables.decodingText));
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
+                            const SnackBar(
                               content: Text('Текст скопирован в буфер обмена'),
                             ),
                           );
@@ -139,7 +139,7 @@ class _DecodingPageState extends State<DecodingPage> {
                     : () {
                         startDecodingBlinks();
                       },
-                child: Text('Моргания'),
+                child: const Text('Моргания'),
               ),
               ElevatedButton(
                 onPressed: isDecodingFlashesActive
@@ -147,7 +147,7 @@ class _DecodingPageState extends State<DecodingPage> {
                     : () {
                         startDecodingFlashes();
                       },
-                child: Text('Вспышки'),
+                child: const Text('Вспышки'),
               ),
             ],
           ),

@@ -1,15 +1,15 @@
 import 'package:flash_talk/shared_variables.dart';
 import 'package:flutter/material.dart';
-import 'decoding.dart';
 import 'package:auto_route/auto_route.dart';
 import 'router.dart';
 import 'package:flutter/services.dart';
-import 'russian_morse_dictionary.dart';
+import 'morse_dictionary.dart';
 
 class _SavedTranslationVariables {
   static String inputText = '';
   static String translatedText = '';
   static bool isSwapped = false;
+  static String selectedLanguage = 'Русский';
 }
 
 @RoutePage()
@@ -28,7 +28,7 @@ class _TranslationPageState extends State<TranslationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Перевод'),
+        title: const Text('Перевод'),
         automaticallyImplyLeading: false,
       ),
       body: buildTranslationBody(),
@@ -41,17 +41,17 @@ class _TranslationPageState extends State<TranslationPage> {
 
           switch (index) {
             case 0:
-              context.router.navigate(TranslationRoute());
+              context.router.navigate(const TranslationRoute());
               break;
             case 1:
-              context.router.navigate(DecodingRoute());
+              context.router.navigate(const DecodingRoute());
               break;
             case 2:
-              context.router.navigate(OptionsRoute());
+              context.router.navigate(const OptionsRoute());
               break;
           }
         },
-        items: [
+        items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.translate),
             label: 'Перевод',
@@ -79,44 +79,54 @@ class _TranslationPageState extends State<TranslationPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildLanguageSelector(
-                  _SavedTranslationVariables.isSwapped ? 'Русский' : 'Морзе'),
+                  _SavedTranslationVariables.isSwapped ? 'Морзе' : _SavedTranslationVariables.selectedLanguage),
               IconButton(
-                icon: Icon(Icons.swap_horiz),
+                icon: const Icon(Icons.swap_horiz),
                 onPressed: () {
                   setState(() {
+                    _SavedTranslationVariables.inputText = '';
+                    _SavedTranslationVariables.translatedText = '';
                     _SavedTranslationVariables.isSwapped =
-                        !_SavedTranslationVariables.isSwapped;
+                    !_SavedTranslationVariables.isSwapped;
                   });
                 },
               ),
               _buildLanguageSelector(
-                  _SavedTranslationVariables.isSwapped ? 'Морзе' : 'Русский'),
+                  _SavedTranslationVariables.isSwapped ? _SavedTranslationVariables.selectedLanguage : 'Морзе'),
             ],
           ),
-          SizedBox(height: 16.0),
+          const SizedBox(height: 16.0),
           Expanded(
             child: TextField(
               onChanged: (text) {
                 setState(() {
                   _SavedTranslationVariables.inputText = text;
-                  _SavedTranslationVariables.translatedText = translateToMorse(text);
+                  if (_SavedTranslationVariables.isSwapped) {
+                    _SavedTranslationVariables.translatedText =
+                        translateFromMorse(text);
+                  }
+                  else {
+                    _SavedTranslationVariables.translatedText =
+                        translateToMorse(text);
+                  }
                 });
               },
               controller: TextEditingController.fromValue(
                 TextEditingValue(
                   text: _SavedTranslationVariables.inputText,
                   selection: TextSelection.fromPosition(
-                    TextPosition(offset: _SavedTranslationVariables.inputText.length),
+                    TextPosition(
+                        offset: _SavedTranslationVariables.inputText.length),
                   ),
                 ),
               ),
               maxLines: null,
               expands: true,
-              style: TextStyle(fontSize: 18.0),
+              style: const TextStyle(fontSize: 18.0),
               decoration: InputDecoration(
                 hintText: 'Введите текст',
                 suffixIcon: IconButton(
-                  icon: Icon(Icons.clear),
+                  icon: const Icon(Icons.clear),
                   onPressed: () {
                     setState(() {
                       _SavedTranslationVariables.inputText = '';
@@ -144,19 +154,19 @@ class _TranslationPageState extends State<TranslationPage> {
                         _SavedTranslationVariables.translatedText.isNotEmpty
                             ? _SavedTranslationVariables.translatedText
                             : 'Здесь будет перевод',
-                        style: TextStyle(fontSize: 18.0),
+                        style: const TextStyle(fontSize: 18.0),
                       ),
                     ),
                   ),
                   Column(
                     children: [
                       IconButton(
-                        icon: Icon(Icons.copy),
+                        icon: const Icon(Icons.copy),
                         onPressed: () {
                           Clipboard.setData(ClipboardData(
                               text: _SavedTranslationVariables.translatedText));
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
+                            const SnackBar(
                               content: Text('Текст скопирован в буфер обмена'),
                             ),
                           );
@@ -198,19 +208,54 @@ class _TranslationPageState extends State<TranslationPage> {
 
   Widget _buildLanguageSelector(String language) {
     return Expanded(
-      child: Container(
-        padding: EdgeInsets.all(8.0),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.white),
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: Center(
-          child: Text(
-            language,
-            style: TextStyle(fontSize: 16.0),
+      child: InkWell(
+        onTap: () {
+          _showLanguagePicker(context);
+        },
+        child: Container(
+          padding: const EdgeInsets.all(8.0),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.white),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: Center(
+            child: Text(
+              language,
+              style: const TextStyle(fontSize: 16.0),
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _showLanguagePicker(BuildContext context) async {
+    String? selectedLanguage = await showModalBottomSheet<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildLanguageOption(context, 'Русский'),
+            _buildLanguageOption(context, 'Английский'),
+          ],
+        );
+      },
+    );
+
+    if (selectedLanguage != null) {
+      setState(() {
+        _SavedTranslationVariables.selectedLanguage = selectedLanguage;
+      });
+    }
+  }
+
+  Widget _buildLanguageOption(BuildContext context, String language) {
+    return ListTile(
+      title: Text(language),
+      onTap: () {
+        Navigator.pop(context, language);
+      },
     );
   }
 
@@ -224,7 +269,7 @@ class _TranslationPageState extends State<TranslationPage> {
         onTap: onPressed,
         borderRadius: BorderRadius.circular(8.0),
         child: Container(
-          padding: EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(8.0),
           decoration: BoxDecoration(
             border: Border.all(color: Colors.white),
             borderRadius: BorderRadius.circular(8.0),
@@ -238,15 +283,31 @@ class _TranslationPageState extends State<TranslationPage> {
     );
   }
 
+  String translateFromMorse(String text) {
+    text = text
+        .replaceAll('▬', '.')
+        .replaceAll('—', '.')
+        .replaceAll('―', '.')
+        .replaceAll('_', '.')
+        .replaceAll('●', '.')
+        .replaceAll('•', '.');
+    List<String> morseChars = text.split(' ');
+    List<String> translatedChars = [];
+
+    for (String morseChar in morseChars) {
+      translatedChars
+          .add(MorseDictionary.getMorseToLanguageMap(_SavedTranslationVariables.selectedLanguage)[morseChar] ?? "");
+    }
+    return translatedChars.join('');
+  }
 
   String translateToMorse(String text) {
     text = text.toUpperCase();
-
     List<String> morseList = [];
     for (int i = 0; i < text.length; i++) {
       String char = text[i];
-      if (RussianMorseDictionary.rusToMorse.containsKey(char)) {
-        morseList.add(RussianMorseDictionary.rusToMorse[char]!);
+      if (MorseDictionary.getMorseMap(_SavedTranslationVariables.selectedLanguage).containsKey(char)) {
+        morseList.add(MorseDictionary.getMorseMap(_SavedTranslationVariables.selectedLanguage)[char]!);
       } else if (char == ' ') {
         morseList.add(' ');
       }
@@ -254,8 +315,6 @@ class _TranslationPageState extends State<TranslationPage> {
     morseList = morseList.map((morse) {
       return morse.replaceAll('-', '—').replaceAll('.', '●');
     }).toList();
-
     return morseList.join(' ');
   }
-
 }
