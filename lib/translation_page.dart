@@ -285,10 +285,10 @@ class _TranslationPageState extends State<TranslationPage> {
 
   String translateFromMorse(String text) {
     text = text
-        .replaceAll('▬', '.')
-        .replaceAll('—', '.')
-        .replaceAll('―', '.')
-        .replaceAll('_', '.')
+        .replaceAll('▬', '-')
+        .replaceAll('—', '-')
+        .replaceAll('―', '-')
+        .replaceAll('_', '-')
         .replaceAll('●', '.')
         .replaceAll('•', '.');
     List<String> morseChars = text.split(' ');
