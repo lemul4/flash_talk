@@ -1,7 +1,7 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:flash_talk/decoding.dart';
-import 'package:flash_talk/translation_page.dart';
-import 'options_page.dart';
+import 'package:flash_talk/pages/decoding_page.dart';
+import 'package:flash_talk/pages/translation_page.dart';
+import 'package:flash_talk/pages/options_page.dart';
 part 'router.gr.dart';
 
 @AutoRouterConfig()

@@ -1,9 +1,8 @@
-import 'package:flash_talk/router.dart';
-import 'package:flash_talk/shared_variables.dart';
+import 'package:flash_talk/variables/shared_variables.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:auto_route/auto_route.dart';
-import 'package:flash_talk/translation_page.dart';
+import 'package:flash_talk/routes/bottom_navigation_bar.dart';
 
 class _SavedDecodingVariables {
   static double sensitivityValue = 25.0;
@@ -30,40 +29,7 @@ class _DecodingPageState extends State<DecodingPage> {
         automaticallyImplyLeading: false,
       ),
       body: buildDecodingBody(),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: SharedVariables.currentIndex,
-        onTap: (index) {
-          setState(() {
-            SharedVariables.currentIndex = index;
-          });
-
-          switch (index) {
-            case 0:
-              context.router.navigate(const TranslationRoute());
-              break;
-            case 1:
-              context.router.navigate(const DecodingRoute());
-              break;
-            case 2:
-              context.router.navigate(const OptionsRoute());
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.translate),
-            label: 'Перевод',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.code),
-            label: 'Декодирование',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Настройки',
-          ),
-        ],
-      ),
+      bottomNavigationBar: const CustomBottomNavigationBar(),
     );
   }
 

@@ -1,8 +1,5 @@
-import 'package:flash_talk/router.dart';
+import 'package:flash_talk/routes/router.dart';
 import 'package:flutter/material.dart';
-import 'decoding.dart';
-import 'router.dart';
-import 'translation_page.dart';
 
 void main() {
   runApp(MyApp());

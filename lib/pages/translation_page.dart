@@ -1,15 +1,14 @@
-import 'package:flash_talk/shared_variables.dart';
+import 'package:flash_talk/variables/shared_variables.dart';
 import 'package:flutter/material.dart';
-import 'package:auto_route/auto_route.dart';
-import 'router.dart';
 import 'package:flutter/services.dart';
-import 'morse_dictionary.dart';
+import 'package:auto_route/auto_route.dart';
+import 'package:flash_talk/routes/bottom_navigation_bar.dart';
+import 'package:flash_talk/logic/morse_translation.dart';
 
 class _SavedTranslationVariables {
   static String inputText = '';
   static String translatedText = '';
   static bool isSwapped = false;
-  static String selectedLanguage = 'Русский';
 }
 
 @RoutePage()
@@ -32,40 +31,7 @@ class _TranslationPageState extends State<TranslationPage> {
         automaticallyImplyLeading: false,
       ),
       body: buildTranslationBody(),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: SharedVariables.currentIndex,
-        onTap: (index) {
-          setState(() {
-            SharedVariables.currentIndex = index;
-          });
-
-          switch (index) {
-            case 0:
-              context.router.navigate(const TranslationRoute());
-              break;
-            case 1:
-              context.router.navigate(const DecodingRoute());
-              break;
-            case 2:
-              context.router.navigate(const OptionsRoute());
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.translate),
-            label: 'Перевод',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.code),
-            label: 'Декодирование',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Настройки',
-          ),
-        ],
-      ),
+      bottomNavigationBar: const CustomBottomNavigationBar(),
     );
   }
 
@@ -78,8 +44,9 @@ class _TranslationPageState extends State<TranslationPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildLanguageSelector(
-                  _SavedTranslationVariables.isSwapped ? 'Морзе' : _SavedTranslationVariables.selectedLanguage),
+              _buildLanguageSelector(_SavedTranslationVariables.isSwapped
+                  ? 'Морзе'
+                  : SharedVariables.selectedLanguage),
               IconButton(
                 icon: const Icon(Icons.swap_horiz),
                 onPressed: () {
@@ -87,12 +54,13 @@ class _TranslationPageState extends State<TranslationPage> {
                     _SavedTranslationVariables.inputText = '';
                     _SavedTranslationVariables.translatedText = '';
                     _SavedTranslationVariables.isSwapped =
-                    !_SavedTranslationVariables.isSwapped;
+                        !_SavedTranslationVariables.isSwapped;
                   });
                 },
               ),
-              _buildLanguageSelector(
-                  _SavedTranslationVariables.isSwapped ? _SavedTranslationVariables.selectedLanguage : 'Морзе'),
+              _buildLanguageSelector(_SavedTranslationVariables.isSwapped
+                  ? SharedVariables.selectedLanguage
+                  : 'Морзе'),
             ],
           ),
           const SizedBox(height: 16.0),
@@ -103,11 +71,12 @@ class _TranslationPageState extends State<TranslationPage> {
                   _SavedTranslationVariables.inputText = text;
                   if (_SavedTranslationVariables.isSwapped) {
                     _SavedTranslationVariables.translatedText =
-                        translateFromMorse(text);
-                  }
-                  else {
+                        MorseTranslation.translateFromMorse(
+                            text, SharedVariables.selectedLanguage);
+                  } else {
                     _SavedTranslationVariables.translatedText =
-                        translateToMorse(text);
+                        MorseTranslation.translateToMorse(
+                            text, SharedVariables.selectedLanguage);
                   }
                 });
               },
@@ -245,7 +214,7 @@ class _TranslationPageState extends State<TranslationPage> {
 
     if (selectedLanguage != null) {
       setState(() {
-        _SavedTranslationVariables.selectedLanguage = selectedLanguage;
+        SharedVariables.selectedLanguage = selectedLanguage;
       });
     }
   }
@@ -281,40 +250,5 @@ class _TranslationPageState extends State<TranslationPage> {
         ),
       ),
     );
-  }
-
-  String translateFromMorse(String text) {
-    text = text
-        .replaceAll('▬', '-')
-        .replaceAll('—', '-')
-        .replaceAll('―', '-')
-        .replaceAll('_', '-')
-        .replaceAll('●', '.')
-        .replaceAll('•', '.');
-    List<String> morseChars = text.split(' ');
-    List<String> translatedChars = [];
-
-    for (String morseChar in morseChars) {
-      translatedChars
-          .add(MorseDictionary.getMorseToLanguageMap(_SavedTranslationVariables.selectedLanguage)[morseChar] ?? "");
-    }
-    return translatedChars.join('');
-  }
-
-  String translateToMorse(String text) {
-    text = text.toUpperCase();
-    List<String> morseList = [];
-    for (int i = 0; i < text.length; i++) {
-      String char = text[i];
-      if (MorseDictionary.getMorseMap(_SavedTranslationVariables.selectedLanguage).containsKey(char)) {
-        morseList.add(MorseDictionary.getMorseMap(_SavedTranslationVariables.selectedLanguage)[char]!);
-      } else if (char == ' ') {
-        morseList.add(' ');
-      }
-    }
-    morseList = morseList.map((morse) {
-      return morse.replaceAll('-', '—').replaceAll('.', '●');
-    }).toList();
-    return morseList.join(' ');
   }
 }
