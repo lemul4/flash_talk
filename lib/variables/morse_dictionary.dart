@@ -1,5 +1,26 @@
+abstract class MorseLanguage {
+  Map<String, String> getMorseMap();
+  Map<String, String> getMorseToLanguageMap();
+}
+
 class MorseDictionary {
-  static const Map<String, String> _rusToMorse = {
+  static final Map<String, MorseLanguage> _languages = {
+    'русский': RussianMorseLanguage(),
+    'английский': EnglishMorseLanguage(),
+  };
+
+  static MorseLanguage getLanguage(String language) {
+    final MorseLanguage? selectedLanguage = _languages[language.toLowerCase()];
+    if (selectedLanguage == null) {
+      throw ArgumentError('Unsupported language: $language');
+    }
+    return selectedLanguage;
+  }
+}
+
+class RussianMorseLanguage implements MorseLanguage {
+  @override
+  Map<String, String> getMorseMap() => {
     'А': '.-',
     'Б': '-...',
     'В': '.--',
@@ -45,7 +66,17 @@ class MorseDictionary {
     '9': '----.',
     ' ': '/',
   };
-  static const Map<String, String> _engToMorse = {
+
+  @override
+  Map<String, String> getMorseToLanguageMap() =>
+      Map.fromEntries(getMorseMap().entries.map((entry) =>
+          MapEntry(entry.value, entry.key)));
+
+}
+
+class EnglishMorseLanguage implements MorseLanguage {
+  @override
+  Map<String, String> getMorseMap() => {
     'A': '.-',
     'B': '-...',
     'C': '-.-.',
@@ -84,31 +115,12 @@ class MorseDictionary {
     '9': '----.',
     ' ': '/',
   };
-  static final Map<String, String> _morseToRus = Map.fromEntries(
-      _rusToMorse.entries.map((entry) => MapEntry(entry.value, entry.key)));
 
-  static final Map<String, String> _morseToEng = Map.fromEntries(
-      _engToMorse.entries.map((entry) => MapEntry(entry.value, entry.key)));
+  @override
+  Map<String, String> getMorseToLanguageMap() =>
+      Map.fromEntries(getMorseMap().entries.map((entry) =>
+          MapEntry(entry.value, entry.key)));
 
-  static Map<String, String> getMorseMap(String language) {
-    switch (language.toLowerCase()) {
-      case 'русский':
-        return _rusToMorse;
-      case 'английский':
-        return _engToMorse;
-      default:
-        throw ArgumentError('Unsupported language: $language');
-    }
-  }
-
-  static Map<String, String> getMorseToLanguageMap(String language) {
-    switch (language.toLowerCase()) {
-      case 'русский':
-        return _morseToRus;
-      case 'английский':
-        return _morseToEng;
-      default:
-        throw ArgumentError('Unsupported language: $language');
-    }
-  }
 }
+
+

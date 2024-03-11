@@ -9,23 +9,26 @@ class MorseTranslation {
         .replaceAll('_', '-')
         .replaceAll('●', '.')
         .replaceAll('•', '.');
+
+    final MorseLanguage selectedLanguage = MorseDictionary.getLanguage(language);
     List<String> morseChars = text.split(' ');
     List<String> translatedChars = [];
 
     for (String morseChar in morseChars) {
       translatedChars
-          .add(MorseDictionary.getMorseToLanguageMap(language)[morseChar] ?? "");
+          .add(selectedLanguage.getMorseToLanguageMap()[morseChar] ?? "");
     }
     return translatedChars.join('');
   }
 
   static String translateToMorse(String text, String language) {
     text = text.toUpperCase();
+    final MorseLanguage selectedLanguage = MorseDictionary.getLanguage(language);
     List<String> morseList = [];
     for (int i = 0; i < text.length; i++) {
       String char = text[i];
-      if (MorseDictionary.getMorseMap(language).containsKey(char)) {
-        morseList.add(MorseDictionary.getMorseMap(language)[char]!);
+      if (selectedLanguage.getMorseMap().containsKey(char)) {
+        morseList.add(selectedLanguage.getMorseMap()[char]!);
       } else if (char == ' ') {
         morseList.add(' ');
       }

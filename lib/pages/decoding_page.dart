@@ -6,7 +6,7 @@ import 'package:flash_talk/routes/bottom_navigation_bar.dart';
 
 class _SavedDecodingVariables {
   static double sensitivityValue = 25.0;
-  static String decodingText = "Здесь будет находиться декодированный текст";
+  static String decodingText = "";
 }
 
 @RoutePage()
@@ -61,7 +61,9 @@ class _DecodingPageState extends State<DecodingPage> {
                   Expanded(
                     child: SingleChildScrollView(
                       child: Text(
-                        _SavedDecodingVariables.decodingText,
+                        _SavedDecodingVariables.decodingText.isNotEmpty
+                            ? _SavedDecodingVariables.decodingText
+                            : " Здесь будет находиться декодированный текст",
                         style: const TextStyle(fontSize: 18.0),
                       ),
                     ),
@@ -71,7 +73,6 @@ class _DecodingPageState extends State<DecodingPage> {
                       IconButton(
                         icon: const Icon(Icons.clear),
                         onPressed: () {
-                          // Обнулить constantlyUpdatingText
                           setState(() {
                             _SavedDecodingVariables.decodingText = "";
                           });
