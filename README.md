@@ -19,4 +19,4 @@
 
 ● распознавание текста из морганий глазами.
 
-Запуск:
+Запуск: build\app\outputs\flutter-apk\app-release.apk
