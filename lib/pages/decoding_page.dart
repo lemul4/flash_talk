@@ -1,4 +1,3 @@
-import 'package:flash_talk/variables/shared_variables.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:auto_route/auto_route.dart';
