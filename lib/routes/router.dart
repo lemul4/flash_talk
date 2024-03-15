@@ -10,7 +10,6 @@ class AppRouter extends _$AppRouter {
   List<AutoRoute> get routes => [
     MaterialRoute(page: TranslationRoute.page, initial: true),
     MaterialRoute(page: DecodingRoute.page),
-    MaterialRoute(page: OptionsRoute.page)
-
+    MaterialRoute(page: OptionsRoute.page),
   ];
 }

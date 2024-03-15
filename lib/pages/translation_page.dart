@@ -4,12 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flash_talk/routes/bottom_navigation_bar.dart';
 import 'package:flash_talk/logic/morse_translation.dart';
-
-class _SavedTranslationVariables {
-  static String inputText = '';
-  static String translatedText = '';
-  static bool isSwapped = false;
-}
+import 'package:torch_light/torch_light.dart';
 
 @RoutePage()
 class TranslationPage extends StatefulWidget {
@@ -22,6 +17,10 @@ class TranslationPage extends StatefulWidget {
 class _TranslationPageState extends State<TranslationPage> {
   bool isButton1Pressed = false;
   bool isButton2Pressed = false;
+  bool isMorseFlashing = false;
+  bool isSwapped = false;
+  String inputText = '';
+  String translatedText = '';
 
   @override
   Widget build(BuildContext context) {
@@ -44,23 +43,20 @@ class _TranslationPageState extends State<TranslationPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildLanguageSelector(_SavedTranslationVariables.isSwapped
-                  ? 'Морзе'
-                  : SharedVariables.selectedLanguage),
+              _buildLanguageSelector(
+                  isSwapped ? 'Морзе' : SharedVariables.selectedLanguage),
               IconButton(
                 icon: const Icon(Icons.swap_horiz),
                 onPressed: () {
                   setState(() {
-                    _SavedTranslationVariables.inputText = '';
-                    _SavedTranslationVariables.translatedText = '';
-                    _SavedTranslationVariables.isSwapped =
-                        !_SavedTranslationVariables.isSwapped;
+                    inputText = '';
+                    translatedText = '';
+                    isSwapped = !isSwapped;
                   });
                 },
               ),
-              _buildLanguageSelector(_SavedTranslationVariables.isSwapped
-                  ? SharedVariables.selectedLanguage
-                  : 'Морзе'),
+              _buildLanguageSelector(
+                  isSwapped ? SharedVariables.selectedLanguage : 'Морзе'),
             ],
           ),
           const SizedBox(height: 16.0),
@@ -68,24 +64,21 @@ class _TranslationPageState extends State<TranslationPage> {
             child: TextField(
               onChanged: (text) {
                 setState(() {
-                  _SavedTranslationVariables.inputText = text;
-                  if (_SavedTranslationVariables.isSwapped) {
-                    _SavedTranslationVariables.translatedText =
-                        MorseTranslation.translateFromMorse(
-                            text, SharedVariables.selectedLanguage);
+                  inputText = text;
+                  if (isSwapped) {
+                    translatedText = MorseTranslation.translateFromMorse(
+                        text, SharedVariables.selectedLanguage);
                   } else {
-                    _SavedTranslationVariables.translatedText =
-                        MorseTranslation.translateToMorse(
-                            text, SharedVariables.selectedLanguage);
+                    translatedText = MorseTranslation.translateToMorse(
+                        text, SharedVariables.selectedLanguage);
                   }
                 });
               },
               controller: TextEditingController.fromValue(
                 TextEditingValue(
-                  text: _SavedTranslationVariables.inputText,
+                  text: inputText,
                   selection: TextSelection.fromPosition(
-                    TextPosition(
-                        offset: _SavedTranslationVariables.inputText.length),
+                    TextPosition(offset: inputText.length),
                   ),
                 ),
               ),
@@ -98,8 +91,8 @@ class _TranslationPageState extends State<TranslationPage> {
                   icon: const Icon(Icons.clear),
                   onPressed: () {
                     setState(() {
-                      _SavedTranslationVariables.inputText = '';
-                      _SavedTranslationVariables.translatedText = '';
+                      inputText = '';
+                      translatedText = '';
                     });
                   },
                 ),
@@ -120,8 +113,8 @@ class _TranslationPageState extends State<TranslationPage> {
                   Expanded(
                     child: SingleChildScrollView(
                       child: Text(
-                        _SavedTranslationVariables.translatedText.isNotEmpty
-                            ? _SavedTranslationVariables.translatedText
+                        translatedText.isNotEmpty
+                            ? translatedText
                             : 'Здесь будет перевод',
                         style: const TextStyle(fontSize: 18.0),
                       ),
@@ -132,8 +125,8 @@ class _TranslationPageState extends State<TranslationPage> {
                       IconButton(
                         icon: const Icon(Icons.copy),
                         onPressed: () {
-                          Clipboard.setData(ClipboardData(
-                              text: _SavedTranslationVariables.translatedText));
+                          Clipboard.setData(
+                              ClipboardData(text: translatedText));
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Текст скопирован в буфер обмена'),
@@ -164,7 +157,17 @@ class _TranslationPageState extends State<TranslationPage> {
                 icon: isButton2Pressed ? Icons.stop : Icons.highlight,
                 onPressed: () {
                   setState(() {
-                    isButton2Pressed = !isButton2Pressed;
+                    isMorseFlashing = !isMorseFlashing;
+                    if (isMorseFlashing) {
+                      if (isSwapped) {
+                        _morseFlashing(
+                            inputText, SharedVariables.morseInterval);
+                      } else {
+                        _morseFlashing(
+                            translatedText, SharedVariables.morseInterval);
+                      }
+                      isButton2Pressed = true;
+                    }
                   });
                 },
               ),
@@ -226,6 +229,63 @@ class _TranslationPageState extends State<TranslationPage> {
         Navigator.pop(context, language);
       },
     );
+  }
+
+  Future<void> _flash(int milliseconds) async {
+    try {
+      await TorchLight.enableTorch();
+      await Future.delayed(Duration(milliseconds: milliseconds));
+    } on Exception catch (e) {
+      print('Error enabling torch: $e');
+      // Handle error
+    } finally {
+      try {
+        await TorchLight.disableTorch();
+      } on Exception catch (e) {
+        print('Error disabling torch: $e');
+        // Handle error
+      }
+    }
+  }
+
+  Future<void> _pause(int milliseconds) async {
+    await Future.delayed(Duration(milliseconds: milliseconds));
+  }
+
+  Future<void> _morseFlashing(String morseCode, int interval) async {
+    morseCode = morseCode
+        .replaceAll('▬', '-')
+        .replaceAll('—', '-')
+        .replaceAll('―', '-')
+        .replaceAll('_', '-')
+        .replaceAll('●', '.')
+        .replaceAll('•', '.');
+
+    for (String morseChar in morseCode.split("")) {
+      if (!isMorseFlashing) {
+        break;
+      }
+      switch (morseChar) {
+        case '.':
+          await _flash(interval);
+          await _pause(interval);
+          continue;
+        case '-':
+          await _flash(3 * interval);
+          await _pause(interval);
+          continue;
+        case ' ':
+          await _pause(2 * interval);
+          continue;
+        case _:
+          continue;
+      }
+    }
+
+    setState(() {
+      isButton2Pressed = false;
+      isMorseFlashing = false;
+    });
   }
 
   Widget _buildIconButton({

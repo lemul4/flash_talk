@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flash_talk/routes/bottom_navigation_bar.dart';
 
+
 class _SavedDecodingVariables {
   static double sensitivityValue = 25.0;
   static String decodingText = "";
