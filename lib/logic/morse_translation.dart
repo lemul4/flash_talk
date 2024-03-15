@@ -8,7 +8,8 @@ class MorseTranslation {
         .replaceAll('―', '-')
         .replaceAll('_', '-')
         .replaceAll('●', '.')
-        .replaceAll('•', '.');
+        .replaceAll('•', '.')
+        .replaceAll('     ', ' / ');
 
     final MorseLanguage selectedLanguage = MorseDictionary.getLanguage(language);
     List<String> morseChars = text.split(' ');

@@ -1,4 +1,5 @@
 import 'package:flash_talk/variables/shared_variables.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:auto_route/auto_route.dart';
@@ -161,10 +162,10 @@ class _TranslationPageState extends State<TranslationPage> {
                     if (isMorseFlashing) {
                       if (isSwapped) {
                         _morseFlashing(
-                            inputText, SharedVariables.morseInterval);
+                            inputText, SharedVariables.morseInterval, context);
                       } else {
-                        _morseFlashing(
-                            translatedText, SharedVariables.morseInterval);
+                        _morseFlashing(translatedText,
+                            SharedVariables.morseInterval, context);
                       }
                       isButton2Pressed = true;
                     }
@@ -236,14 +237,17 @@ class _TranslationPageState extends State<TranslationPage> {
       await TorchLight.enableTorch();
       await Future.delayed(Duration(milliseconds: milliseconds));
     } on Exception catch (e) {
-      print('Error enabling torch: $e');
-      // Handle error
+      if (kDebugMode) {
+        print('Error enabling torch: $e');
+      }
+
     } finally {
       try {
         await TorchLight.disableTorch();
       } on Exception catch (e) {
-        print('Error disabling torch: $e');
-        // Handle error
+        if (kDebugMode) {
+          print('Error disabling torch: $e');
+        }
       }
     }
   }
@@ -252,34 +256,55 @@ class _TranslationPageState extends State<TranslationPage> {
     await Future.delayed(Duration(milliseconds: milliseconds));
   }
 
-  Future<void> _morseFlashing(String morseCode, int interval) async {
-    morseCode = morseCode
-        .replaceAll('▬', '-')
-        .replaceAll('—', '-')
-        .replaceAll('―', '-')
-        .replaceAll('_', '-')
-        .replaceAll('●', '.')
-        .replaceAll('•', '.');
+  void _showMessage(String message, BuildContext context) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
 
-    for (String morseChar in morseCode.split("")) {
-      if (!isMorseFlashing) {
-        break;
+  Future<void> _morseFlashing(
+      String morseCode, int interval, BuildContext context) async {
+    try {
+      bool isTorchAvailable = await TorchLight.isTorchAvailable();
+      if (!isTorchAvailable) {
+        _showMessage('No torch available.', context);
+        return;
       }
-      switch (morseChar) {
-        case '.':
-          await _flash(interval);
-          await _pause(interval);
-          continue;
-        case '-':
-          await _flash(3 * interval);
-          await _pause(interval);
-          continue;
-        case ' ':
-          await _pause(2 * interval);
-          continue;
-        case _:
-          continue;
+
+      morseCode = morseCode
+          .replaceAll('▬', '-')
+          .replaceAll('—', '-')
+          .replaceAll('―', '-')
+          .replaceAll('_', '-')
+          .replaceAll('●', '.')
+          .replaceAll('•', '.')
+          .replaceAll('     ', ' / ');
+
+      for (String morseChar in morseCode.split("")) {
+        if (!isMorseFlashing) {
+          break;
+        }
+        switch (morseChar) {
+          case '.':
+            await _flash(interval);
+            await _pause(interval);
+            continue;
+          case '-':
+            await _flash(3 * interval);
+            await _pause(interval);
+            continue;
+          case ' ':
+            await _pause(2 * interval);
+            continue;
+          case _:
+            continue;
+        }
       }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error checking torch availability: $e');
+      }
+      _showMessage(
+          'Не удалось проверить, есть ли на устройстве фонарик', context);
     }
 
     setState(() {
