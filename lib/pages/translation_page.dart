@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flash_talk/routes/bottom_navigation_bar.dart';
 import 'package:flash_talk/logic/morse_translation.dart';
-import 'package:torch_light/torch_light.dart';
+import 'package:sound_generator/sound_generator.dart';
+import 'package:sound_generator/waveTypes.dart';
+import 'package:flash_talk/logic/morse_transmission.dart';
 
 @RoutePage()
 class TranslationPage extends StatefulWidget {
@@ -16,12 +18,33 @@ class TranslationPage extends StatefulWidget {
 }
 
 class _TranslationPageState extends State<TranslationPage> {
-  bool isButton1Pressed = false;
-  bool isButton2Pressed = false;
-  bool isMorseFlashing = false;
+  bool isMorseBeeping = false;
   bool isSwapped = false;
   String inputText = '';
   String translatedText = '';
+  double frequency = 600;
+  double balance = 0;
+  double volume = 1;
+  waveTypes waveType = waveTypes.SQUAREWAVE;
+  int sampleRate = 96000;
+
+  void _morseFlashing(String text, int interval, BuildContext context,
+      MorseTransmissionCallback callback) {
+    MorseTransmission().morseFlashing(text, interval, context, callback);
+  }
+
+  void _morseBeeping(
+      String text,
+      int interval,
+      BuildContext context,
+      double frequency,
+      double balance,
+      double volume,
+      waveTypes waveType,
+      MorseTransmissionCallback callback) {
+    MorseTransmission().morseBeeping(text, interval, context, frequency,
+        balance, volume, waveType, callback);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,30 +169,80 @@ class _TranslationPageState extends State<TranslationPage> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               _buildIconButton(
-                icon: isButton1Pressed ? Icons.stop : Icons.volume_up,
+                icon: SharedVariables.isMorseFlashing
+                    ? Icons.stop
+                    : Icons.highlight,
                 onPressed: () {
                   setState(() {
-                    isButton1Pressed = !isButton1Pressed;
+                    SharedVariables.isMorseFlashing =
+                        !SharedVariables.isMorseFlashing;
                   });
+                  if (isSwapped) {
+                    _morseFlashing(
+                      inputText,
+                      SharedVariables.morseInterval,
+                      context,
+                      (success) {
+                        setState(() {
+                          if (success) {
+                            SharedVariables.isMorseFlashing = false;
+                          }
+                        });
+                      },
+                    );
+                  } else {
+                    _morseFlashing(
+                      translatedText,
+                      SharedVariables.morseInterval,
+                      context,
+                      (success) {
+                        setState(() {
+                          if (success) {
+                            SharedVariables.isMorseFlashing = false;
+                          }
+                        });
+                      },
+                    );
+                  }
                 },
               ),
               const SizedBox(width: 16.0),
               _buildIconButton(
-                icon: isButton2Pressed ? Icons.stop : Icons.highlight,
+                icon: SharedVariables.isMorseBeeping
+                    ? Icons.stop
+                    : Icons.volume_up,
                 onPressed: () {
                   setState(() {
-                    isMorseFlashing = !isMorseFlashing;
-                    if (isMorseFlashing) {
-                      if (isSwapped) {
-                        _morseFlashing(
-                            inputText, SharedVariables.morseInterval, context);
-                      } else {
-                        _morseFlashing(translatedText,
-                            SharedVariables.morseInterval, context);
-                      }
-                      isButton2Pressed = true;
-                    }
+                    SharedVariables.isMorseBeeping =
+                        !SharedVariables.isMorseBeeping;
                   });
+                  if (isSwapped) {
+                    _morseBeeping(
+                      inputText,
+                      SharedVariables.morseInterval,
+                      context, frequency, balance, volume, waveType,
+                      (success) {
+                        setState(() {
+                          if (success) {
+                            SharedVariables.isMorseBeeping = false;
+                          }
+                        });
+                      },
+                    );
+                  } else {
+                    _morseBeeping(
+                      translatedText,
+                      SharedVariables.morseInterval,
+                      context, frequency, balance, volume, waveType,
+                          (success) {
+                        setState(() {
+                          if (success) {
+                            SharedVariables.isMorseBeeping = false;
+                          }
+                        });
+                      },
+                    );
+                  }
                 },
               ),
             ],
@@ -232,87 +305,6 @@ class _TranslationPageState extends State<TranslationPage> {
     );
   }
 
-  Future<void> _flash(int milliseconds) async {
-    try {
-      await TorchLight.enableTorch();
-      await Future.delayed(Duration(milliseconds: milliseconds));
-    } on Exception catch (e) {
-      if (kDebugMode) {
-        print('Error enabling torch: $e');
-      }
-
-    } finally {
-      try {
-        await TorchLight.disableTorch();
-      } on Exception catch (e) {
-        if (kDebugMode) {
-          print('Error disabling torch: $e');
-        }
-      }
-    }
-  }
-
-  Future<void> _pause(int milliseconds) async {
-    await Future.delayed(Duration(milliseconds: milliseconds));
-  }
-
-  void _showMessage(String message, BuildContext context) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  Future<void> _morseFlashing(
-      String morseCode, int interval, BuildContext context) async {
-    try {
-      bool isTorchAvailable = await TorchLight.isTorchAvailable();
-      if (!isTorchAvailable) {
-        _showMessage('No torch available.', context);
-        return;
-      }
-
-      morseCode = morseCode
-          .replaceAll('▬', '-')
-          .replaceAll('—', '-')
-          .replaceAll('―', '-')
-          .replaceAll('_', '-')
-          .replaceAll('●', '.')
-          .replaceAll('•', '.')
-          .replaceAll('     ', ' / ');
-
-      for (String morseChar in morseCode.split("")) {
-        if (!isMorseFlashing) {
-          break;
-        }
-        switch (morseChar) {
-          case '.':
-            await _flash(interval);
-            await _pause(interval);
-            continue;
-          case '-':
-            await _flash(3 * interval);
-            await _pause(interval);
-            continue;
-          case ' ':
-            await _pause(2 * interval);
-            continue;
-          case _:
-            continue;
-        }
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error checking torch availability: $e');
-      }
-      _showMessage(
-          'Не удалось проверить, есть ли на устройстве фонарик', context);
-    }
-
-    setState(() {
-      isButton2Pressed = false;
-      isMorseFlashing = false;
-    });
-  }
-
   Widget _buildIconButton({
     required IconData icon,
     required VoidCallback onPressed,
@@ -335,5 +327,11 @@ class _TranslationPageState extends State<TranslationPage> {
         ),
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    SoundGenerator.init(sampleRate);
   }
 }

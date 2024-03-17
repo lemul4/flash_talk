@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flash_talk/routes/bottom_navigation_bar.dart';
 
-
 class _SavedDecodingVariables {
   static double sensitivityValue = 25.0;
   static String decodingText = "";
@@ -68,34 +67,39 @@ class _DecodingPageState extends State<DecodingPage> {
                       ),
                     ),
                   ),
-                  Column(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          setState(() {
-                            _SavedDecodingVariables.decodingText = "";
-                          });
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.copy),
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(
-                              text: _SavedDecodingVariables.decodingText));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Текст скопирован в буфер обмена'),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+                  SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            setState(() {
+                              _SavedDecodingVariables.decodingText = "";
+                            });
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.copy),
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(
+                                text: _SavedDecodingVariables.decodingText));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content:
+                                    Text('Текст скопирован в буфер обмена'),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
           ),
+
           const SizedBox(height: 16.0),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -123,17 +127,26 @@ class _DecodingPageState extends State<DecodingPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                'Чувствительность ${_SavedDecodingVariables.sensitivityValue.toInt()}м',
-              ),
-              Slider(
-                value: _SavedDecodingVariables.sensitivityValue,
-                min: 1.0,
-                max: 50.0,
-                onChanged: (value) {
-                  setState(() {
-                    _SavedDecodingVariables.sensitivityValue = value;
-                  });
-                },
+                  'Чувствительность ${_SavedDecodingVariables.sensitivityValue.toInt()}м'),
+              SliderTheme(
+                data: const SliderThemeData(
+                  trackHeight: 1.0, // Устанавливаем высоту трека слайдера
+                  thumbShape: RoundSliderThumbShape(
+                      enabledThumbRadius:
+                          8.0), // Устанавливаем радиус кнопки выбора значения
+                  overlayShape: RoundSliderOverlayShape(
+                      overlayRadius: 16.0), // Устанавливаем радиус оверлея
+                ),
+                child: Slider(
+                  value: _SavedDecodingVariables.sensitivityValue,
+                  min: 1.0,
+                  max: 50.0,
+                  onChanged: (value) {
+                    setState(() {
+                      _SavedDecodingVariables.sensitivityValue = value;
+                    });
+                  },
+                ),
               ),
             ],
           ),
