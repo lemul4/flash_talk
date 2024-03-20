@@ -2,7 +2,7 @@ import 'package:sound_generator/waveTypes.dart';
 
 class SharedVariables {
   static int _currentLanguageIndex = 0;
-  static int _morseInterval = 500;
+  static int _morseInterval = 150;
   static double frequency = 600;
   static double balance = 0;
   static double volume = 1;

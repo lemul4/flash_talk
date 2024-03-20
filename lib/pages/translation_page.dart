@@ -1,9 +1,9 @@
 import 'package:flash_talk/variables/shared_variables.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flash_talk/routes/bottom_navigation_bar.dart';
+import 'dart:async';
 import 'package:flash_talk/logic/morse_translation.dart';
 import 'package:sound_generator/sound_generator.dart';
 import 'package:sound_generator/waveTypes.dart';
@@ -18,33 +18,25 @@ class TranslationPage extends StatefulWidget {
 }
 
 class _TranslationPageState extends State<TranslationPage> {
+  final MorseTransmission _morseTransmission = MorseTransmission();
+  final inputText = TextEditingController();
+  @override
+  void dispose() {
+    _morseTransmission.isFlashing.value = false;
+    _morseTransmission.isBeeping.value = false;
+    _morseTransmission.dispose();
+    SoundGenerator.release();
+    super.dispose();
+  }
+
   bool isMorseBeeping = false;
   bool isSwapped = false;
-  String inputText = '';
   String translatedText = '';
   double frequency = 600;
   double balance = 0;
   double volume = 1;
   waveTypes waveType = waveTypes.SQUAREWAVE;
-  int sampleRate = 96000;
-
-  void _morseFlashing(String text, int interval, BuildContext context,
-      MorseTransmissionCallback callback) {
-    MorseTransmission().morseFlashing(text, interval, context, callback);
-  }
-
-  void _morseBeeping(
-      String text,
-      int interval,
-      BuildContext context,
-      double frequency,
-      double balance,
-      double volume,
-      waveTypes waveType,
-      MorseTransmissionCallback callback) {
-    MorseTransmission().morseBeeping(text, interval, context, frequency,
-        balance, volume, waveType, callback);
-  }
+  int sampleRate = 44100;
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +65,7 @@ class _TranslationPageState extends State<TranslationPage> {
                 icon: const Icon(Icons.swap_horiz),
                 onPressed: () {
                   setState(() {
-                    inputText = '';
+                    inputText.text = '';
                     translatedText = '';
                     isSwapped = !isSwapped;
                   });
@@ -88,7 +80,6 @@ class _TranslationPageState extends State<TranslationPage> {
             child: TextField(
               onChanged: (text) {
                 setState(() {
-                  inputText = text;
                   if (isSwapped) {
                     translatedText = MorseTranslation.translateFromMorse(
                         text, SharedVariables.selectedLanguage);
@@ -98,16 +89,9 @@ class _TranslationPageState extends State<TranslationPage> {
                   }
                 });
               },
-              controller: TextEditingController.fromValue(
-                TextEditingValue(
-                  text: inputText,
-                  selection: TextSelection.fromPosition(
-                    TextPosition(offset: inputText.length),
-                  ),
-                ),
-              ),
               maxLines: null,
               expands: true,
+              controller: inputText,
               style: const TextStyle(fontSize: 18.0),
               decoration: InputDecoration(
                 hintText: 'Введите текст',
@@ -115,7 +99,7 @@ class _TranslationPageState extends State<TranslationPage> {
                   icon: const Icon(Icons.clear),
                   onPressed: () {
                     setState(() {
-                      inputText = '';
+                      inputText.clear();
                       translatedText = '';
                     });
                   },
@@ -169,82 +153,52 @@ class _TranslationPageState extends State<TranslationPage> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               _buildIconButton(
-                icon: SharedVariables.isMorseFlashing
-                    ? Icons.stop
-                    : Icons.highlight,
-                onPressed: () {
-                  setState(() {
-                    SharedVariables.isMorseFlashing =
-                        !SharedVariables.isMorseFlashing;
-                  });
-                  if (isSwapped) {
-                    _morseFlashing(
-                      inputText,
-                      SharedVariables.morseInterval,
-                      context,
-                      (success) {
-                        setState(() {
-                          if (success) {
-                            SharedVariables.isMorseFlashing = false;
-                          }
-                        });
-                      },
-                    );
-                  } else {
-                    _morseFlashing(
-                      translatedText,
-                      SharedVariables.morseInterval,
-                      context,
-                      (success) {
-                        setState(() {
-                          if (success) {
-                            SharedVariables.isMorseFlashing = false;
-                          }
-                        });
-                      },
-                    );
-                  }
-                },
-              ),
+                  icon: Icons.volume_up,
+                  onPressed: () {
+                    SoundGenerator.setFrequency(frequency);
+                    SoundGenerator.setWaveType(waveType);
+                    SoundGenerator.setBalance(balance);
+                    SoundGenerator.setVolume(volume);
+                    if (isSwapped) {
+                      _morseTransmission.morseBeeping(
+                          inputText.text,
+                          SharedVariables.morseInterval,
+                          context,
+                          frequency,
+                          balance,
+                          volume,
+                          waveType);
+                    } else {
+                      _morseTransmission.morseBeeping(
+                          translatedText,
+                          SharedVariables.morseInterval,
+                          context,
+                          frequency,
+                          balance,
+                          volume,
+                          waveType);
+                    }
+                  },
+                  valueListenable: _morseTransmission.isBeeping),
               const SizedBox(width: 16.0),
               _buildIconButton(
-                icon: SharedVariables.isMorseBeeping
-                    ? Icons.stop
-                    : Icons.volume_up,
-                onPressed: () {
-                  setState(() {
-                    SharedVariables.isMorseBeeping =
-                        !SharedVariables.isMorseBeeping;
-                  });
-                  if (isSwapped) {
-                    _morseBeeping(
-                      inputText,
-                      SharedVariables.morseInterval,
-                      context, frequency, balance, volume, waveType,
-                      (success) {
-                        setState(() {
-                          if (success) {
-                            SharedVariables.isMorseBeeping = false;
-                          }
-                        });
-                      },
-                    );
-                  } else {
-                    _morseBeeping(
-                      translatedText,
-                      SharedVariables.morseInterval,
-                      context, frequency, balance, volume, waveType,
-                          (success) {
-                        setState(() {
-                          if (success) {
-                            SharedVariables.isMorseBeeping = false;
-                          }
-                        });
-                      },
-                    );
-                  }
-                },
-              ),
+                  icon: Icons.highlight,
+                  onPressed: () {
+                    if (isSwapped) {
+                      _morseTransmission.morseFlashing(
+                        inputText.text,
+                        SharedVariables.morseInterval,
+                        context,
+                      );
+                    } else {
+                      _morseTransmission.morseFlashing(
+                        translatedText,
+                        SharedVariables.morseInterval,
+                        context,
+                      );
+                    }
+                  },
+                  valueListenable: _morseTransmission.isFlashing),
             ],
           ),
         ],
@@ -305,27 +259,32 @@ class _TranslationPageState extends State<TranslationPage> {
     );
   }
 
-  Widget _buildIconButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(8.0),
-        child: Container(
-          padding: const EdgeInsets.all(8.0),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.white),
+  Widget _buildIconButton(
+      {required IconData icon,
+      required VoidCallback onPressed,
+      required valueListenable}) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: valueListenable,
+      builder: (context, value, child) {
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
             borderRadius: BorderRadius.circular(8.0),
+            child: Container(
+              padding: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white),
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Icon(
+                value ? Icons.stop : icon,
+                color: Colors.white,
+              ),
+            ),
           ),
-          child: Icon(
-            icon,
-            color: Colors.white,
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -333,5 +292,8 @@ class _TranslationPageState extends State<TranslationPage> {
   void initState() {
     super.initState();
     SoundGenerator.init(sampleRate);
+    SoundGenerator.setFrequency(frequency);
+    SoundGenerator.setBalance(balance);
+    SoundGenerator.setVolume(volume);
   }
 }

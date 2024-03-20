@@ -40,8 +40,6 @@ dependencies:
   torch_light: ^1.0.0
   flutter_localization: ^0.2.0
   sound_generator: ^0.0.9
-
-
 dev_dependencies:
   flutter_test:
     sdk: flutter

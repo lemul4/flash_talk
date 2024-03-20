@@ -3,33 +3,78 @@ import 'package:sound_generator/waveTypes.dart';
 import 'package:torch_light/torch_light.dart';
 import 'package:flutter/material.dart';
 import 'package:flash_talk/variables/shared_variables.dart';
-import 'package:flash_talk/pages/translation_page.dart';
-
-typedef MorseTransmissionCallback = void Function(bool success);
+import 'package:rxdart/rxdart.dart';
+import 'dart:async';
 
 class MorseTransmission {
-  Future<void> _flash(int milliseconds) async {
-    await TorchLight.enableTorch();
-    await Future.delayed(Duration(milliseconds: milliseconds));
-    await TorchLight.disableTorch();
+  ValueNotifier<bool> isFlashing = ValueNotifier<bool>(false);
+  ValueNotifier<bool> isBeeping = ValueNotifier<bool>(false);
+
+  Future<void> morseBeeping(
+      String morseCode,
+      int interval,
+      BuildContext context,
+      double frequency,
+      double balance,
+      double volume,
+      waveTypes waveType) async {
+    if (isBeeping.value) {
+      isBeeping.value = false;
+      return;
+    }
+
+    isBeeping.value = true;
+
+    morseCode = morseCode
+        .replaceAll('▬', '-')
+        .replaceAll('—', '-')
+        .replaceAll('―', '-')
+        .replaceAll('_', '-')
+        .replaceAll('●', '.')
+        .replaceAll('•', '.')
+        .replaceAll('       ', ' / ');
+
+    for (String morseChar in morseCode.split("")) {
+      if (!isBeeping.value) {
+        break;
+      }
+      switch (morseChar) {
+        case '.':
+          await _beep(interval, context);
+          await _pause(interval);
+          continue;
+        case '-':
+          await _beep(3 * interval, context);
+          await _pause(interval);
+          continue;
+        case ' ':
+          await _pause(2 * interval);
+          continue;
+        case '/':
+          await _pause(2 * interval);
+          continue;
+        default:
+          continue;
+      }
+    }
+    if (isBeeping.value) {
+      isBeeping.value = false;
+    }
   }
 
-  Future<void> _pause(int milliseconds) async {
-    await Future.delayed(Duration(milliseconds: milliseconds));
-  }
+  Future<void> morseFlashing(
+      String morseCode, int interval, BuildContext context) async {
+    if (isFlashing.value) {
+      isFlashing.value = false;
+      return;
+    }
 
-  void _showMessage(String message, BuildContext context) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
-  }
+    isFlashing.value = true;
 
-  Future<void> morseFlashing(String morseCode, int interval,
-      BuildContext context, MorseTransmissionCallback callback) async {
     try {
       bool isTorchAvailable = await TorchLight.isTorchAvailable();
       if (!isTorchAvailable) {
         _showMessage('Фонарик отсутствует.', context);
-        callback(true);
         return;
       }
 
@@ -43,9 +88,10 @@ class MorseTransmission {
           .replaceAll('       ', ' / ');
 
       for (String morseChar in morseCode.split("")) {
-        if (!SharedVariables.isMorseFlashing) {
+        if (!isFlashing.value) {
           break;
         }
+
         switch (morseChar) {
           case '.':
             await _flash(interval);
@@ -65,11 +111,12 @@ class MorseTransmission {
             continue;
         }
       }
-      callback(true);
     } catch (e) {
       _showMessage(
           'Не удалось проверить, есть ли на устройстве фонарик.', context);
-      callback(true);
+    }
+    if (isFlashing.value) {
+      isFlashing.value = false;
     }
   }
 
@@ -84,53 +131,23 @@ class MorseTransmission {
     }
   }
 
-  Future<void> morseBeeping(
-      String morseCode,
-      int interval,
-      BuildContext context,
-      double frequency,
-      double balance,
-      double volume,
-      waveTypes waveType,
-      MorseTransmissionCallback callback) async {
+  Future<void> _flash(int milliseconds) async {
+    await TorchLight.enableTorch();
+    await Future.delayed(Duration(milliseconds: milliseconds));
+    await TorchLight.disableTorch();
+  }
 
-    morseCode = morseCode
-        .replaceAll('▬', '-')
-        .replaceAll('—', '-')
-        .replaceAll('―', '-')
-        .replaceAll('_', '-')
-        .replaceAll('●', '.')
-        .replaceAll('•', '.')
-        .replaceAll('       ', ' / ');
+  Future<void> _pause(int milliseconds) async {
+    await Future.delayed(Duration(milliseconds: milliseconds));
+  }
 
-    SoundGenerator.setFrequency(frequency);
-    SoundGenerator.setWaveType(waveType);
-    SoundGenerator.setBalance(balance);
-    SoundGenerator.setVolume(volume);
+  void _showMessage(String message, BuildContext context) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
 
-    for (String morseChar in morseCode.split("")) {
-      if (!SharedVariables.isMorseBeeping) {
-        break;
-      }
-      switch (morseChar) {
-        case '.':
-          await _beep(interval, context);
-          await _pause(interval);
-          continue;
-        case '-':
-          await _beep(3 * interval, context);
-          await _pause(interval);
-          continue;
-        case ' ':
-          await _pause(2 * interval);
-          continue;
-        case '/':
-          await _pause(2 * interval);
-          continue;
-        case _:
-          continue;
-      }
-    }
-    callback(true);
+  void dispose() {
+    isBeeping.dispose();
+    isFlashing.dispose();
   }
 }
