@@ -3,21 +3,36 @@ import 'package:sound_generator/waveTypes.dart';
 import 'package:torch_light/torch_light.dart';
 import 'package:flutter/material.dart';
 import 'package:flash_talk/variables/shared_variables.dart';
-import 'package:rxdart/rxdart.dart';
 import 'dart:async';
 
-class MorseTransmission {
-  ValueNotifier<bool> isFlashing = ValueNotifier<bool>(false);
+abstract class MorseTransmitter {
+  ValueNotifier<bool> get isTransmitting;
+
+  Future<void> transmit(String morseCode, int interval, BuildContext context);
+
+  Future<void> _pause(int milliseconds) async {
+    await Future.delayed(Duration(milliseconds: milliseconds));
+  }
+
+  void _showMessage(String message, BuildContext context) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void dispose();
+}
+
+class MorseBeeping extends MorseTransmitter {
   ValueNotifier<bool> isBeeping = ValueNotifier<bool>(false);
 
-  Future<void> morseBeeping(
+  @override
+  ValueNotifier<bool> get isTransmitting => isBeeping;
+
+  @override
+  Future<void> transmit(
       String morseCode,
       int interval,
-      BuildContext context,
-      double frequency,
-      double balance,
-      double volume,
-      waveTypes waveType) async {
+      BuildContext context) async {
     if (isBeeping.value) {
       isBeeping.value = false;
       return;
@@ -40,11 +55,11 @@ class MorseTransmission {
       }
       switch (morseChar) {
         case '.':
-          await _beep(interval, context);
+          await _startBeep(interval, context);
           await _pause(interval);
           continue;
         case '-':
-          await _beep(3 * interval, context);
+          await _startBeep(3 * interval, context);
           await _pause(interval);
           continue;
         case ' ':
@@ -62,7 +77,32 @@ class MorseTransmission {
     }
   }
 
-  Future<void> morseFlashing(
+  Future<void> _startBeep(int milliseconds, BuildContext context) async {
+    try {
+      SoundGenerator.play();
+    } on Exception catch (e) {
+      _showMessage("Невозможно включить динамик.", context);
+    } finally {
+      await Future.delayed(Duration(milliseconds: milliseconds));
+      SoundGenerator.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    isBeeping.dispose();
+  }
+
+}
+
+class MorseFlashing extends MorseTransmitter {
+  ValueNotifier<bool> isFlashing = ValueNotifier<bool>(false);
+
+  @override
+  ValueNotifier<bool> get isTransmitting => isFlashing;
+
+  @override
+  Future<void> transmit(
       String morseCode, int interval, BuildContext context) async {
     if (isFlashing.value) {
       isFlashing.value = false;
@@ -94,11 +134,11 @@ class MorseTransmission {
 
         switch (morseChar) {
           case '.':
-            await _flash(interval);
+            await _startFlash(interval);
             await _pause(interval);
             continue;
           case '-':
-            await _flash(3 * interval);
+            await _startFlash(3 * interval);
             await _pause(interval);
             continue;
           case ' ':
@@ -120,34 +160,14 @@ class MorseTransmission {
     }
   }
 
-  Future<void> _beep(int milliseconds, BuildContext context) async {
-    try {
-      SoundGenerator.play();
-    } on Exception catch (e) {
-      _showMessage("Невозможно включить динамик.", context);
-    } finally {
-      await Future.delayed(Duration(milliseconds: milliseconds));
-      SoundGenerator.stop();
-    }
-  }
-
-  Future<void> _flash(int milliseconds) async {
+  Future<void> _startFlash(int milliseconds) async {
     await TorchLight.enableTorch();
     await Future.delayed(Duration(milliseconds: milliseconds));
     await TorchLight.disableTorch();
   }
-
-  Future<void> _pause(int milliseconds) async {
-    await Future.delayed(Duration(milliseconds: milliseconds));
-  }
-
-  void _showMessage(String message, BuildContext context) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
-  }
-
+  @override
   void dispose() {
-    isBeeping.dispose();
     isFlashing.dispose();
   }
 }
+

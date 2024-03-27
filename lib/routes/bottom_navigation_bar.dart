@@ -14,18 +14,18 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
-      currentIndex: SharedVariables.currentIndex,
+      currentIndex: SharedVariables.currentIndex.value,
       onTap: (index) {
       setState(() {
-        SharedVariables.currentIndex = index;
+        SharedVariables.currentIndex.value = index;
       });
       switch (index) {
         case 0:
-          context.router.replace(const TranslationRoute());
+          context.router.navigate(const TranslationRoute());
         case 1:
-          context.router.replace(const DecodingRoute());
+          context.router.navigate(const DecodingRoute());
         case 2:
-          context.router.replace(const OptionsRoute());
+          context.router.navigate(const OptionsRoute());
       }
     },
       items: const [

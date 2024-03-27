@@ -1,26 +1,20 @@
 import 'package:sound_generator/waveTypes.dart';
+import 'package:flutter/material.dart';
 
 class SharedVariables {
-  static int _currentLanguageIndex = 0;
-  static int _morseInterval = 150;
-  static double frequency = 600;
+  static ValueNotifier<int> currentIndex = ValueNotifier<int>(0);
+  static int morseInterval = 150;
+  static double frequency = 1000;
   static double balance = 0;
   static double volume = 1;
   static waveTypes waveType = waveTypes.SQUAREWAVE;
   static int sampleRate = 96000;
-  static bool isMorseFlashing = false;
-  static bool isMorseBeeping = false;
-  static String _selectedLanguage = 'Русский';
+  static String selectedLanguage = 'Русский';
 
 
-  static int get currentIndex => _currentLanguageIndex;
-  static set currentIndex(int index) => _currentLanguageIndex = index;
 
-  static int get morseInterval => _morseInterval;
-  static set morseInterval(int index) => _morseInterval = index;
 
-  static String get selectedLanguage => _selectedLanguage;
-  static set selectedLanguage(String language) => _selectedLanguage = language;
+
 }
 
 

@@ -18,21 +18,24 @@ class TranslationPage extends StatefulWidget {
 }
 
 class _TranslationPageState extends State<TranslationPage> {
-  final MorseTransmission _morseTransmission = MorseTransmission();
+  final MorseTransmitter beeping = MorseBeeping();
+  final MorseTransmitter flashing = MorseFlashing();
+
   final inputText = TextEditingController();
+
   @override
   void dispose() {
-    _morseTransmission.isFlashing.value = false;
-    _morseTransmission.isBeeping.value = false;
-    _morseTransmission.dispose();
-    SoundGenerator.release();
+    flashing.isTransmitting.value = false;
+    beeping.isTransmitting.value = false;
+    flashing.dispose();
+    beeping.dispose();
     super.dispose();
   }
 
   bool isMorseBeeping = false;
   bool isSwapped = false;
   String translatedText = '';
-  double frequency = 600;
+  double frequency = 1000;
   double balance = 0;
   double volume = 1;
   waveTypes waveType = waveTypes.SQUAREWAVE;
@@ -40,13 +43,23 @@ class _TranslationPageState extends State<TranslationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Перевод'),
-        automaticallyImplyLeading: false,
-      ),
-      body: buildTranslationBody(),
-      bottomNavigationBar: const CustomBottomNavigationBar(),
+    return ValueListenableBuilder<int>(
+        valueListenable: SharedVariables.currentIndex,
+        builder: (context, value, child)
+    {
+      if (value != 0) {
+        flashing.isTransmitting.value = false;
+        beeping.isTransmitting.value = false;
+      }
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Перевод'),
+          automaticallyImplyLeading: false,
+        ),
+        body: buildTranslationBody(),
+        bottomNavigationBar: const CustomBottomNavigationBar(),
+      );
+    },
     );
   }
 
@@ -160,45 +173,33 @@ class _TranslationPageState extends State<TranslationPage> {
                     SoundGenerator.setBalance(balance);
                     SoundGenerator.setVolume(volume);
                     if (isSwapped) {
-                      _morseTransmission.morseBeeping(
-                          inputText.text,
-                          SharedVariables.morseInterval,
-                          context,
-                          frequency,
-                          balance,
-                          volume,
-                          waveType);
+                      beeping.transmit(inputText.text,
+                          SharedVariables.morseInterval, context);
                     } else {
-                      _morseTransmission.morseBeeping(
-                          translatedText,
-                          SharedVariables.morseInterval,
-                          context,
-                          frequency,
-                          balance,
-                          volume,
-                          waveType);
+                      beeping.transmit(translatedText,
+                          SharedVariables.morseInterval, context);
                     }
                   },
-                  valueListenable: _morseTransmission.isBeeping),
+                  valueListenable: beeping.isTransmitting),
               const SizedBox(width: 16.0),
               _buildIconButton(
                   icon: Icons.highlight,
                   onPressed: () {
                     if (isSwapped) {
-                      _morseTransmission.morseFlashing(
+                      flashing.transmit(
                         inputText.text,
                         SharedVariables.morseInterval,
                         context,
                       );
                     } else {
-                      _morseTransmission.morseFlashing(
+                      flashing.transmit(
                         translatedText,
                         SharedVariables.morseInterval,
                         context,
                       );
                     }
                   },
-                  valueListenable: _morseTransmission.isFlashing),
+                  valueListenable: flashing.isTransmitting),
             ],
           ),
         ],
@@ -295,5 +296,6 @@ class _TranslationPageState extends State<TranslationPage> {
     SoundGenerator.setFrequency(frequency);
     SoundGenerator.setBalance(balance);
     SoundGenerator.setVolume(volume);
+    SoundGenerator.setWaveType(waveTypes.SINUSOIDAL);
   }
 }

@@ -130,12 +130,12 @@ class _DecodingPageState extends State<DecodingPage> {
                   'Чувствительность ${_SavedDecodingVariables.sensitivityValue.toInt()}м'),
               SliderTheme(
                 data: const SliderThemeData(
-                  trackHeight: 1.0, // Устанавливаем высоту трека слайдера
+                  trackHeight: 1.0,
                   thumbShape: RoundSliderThumbShape(
                       enabledThumbRadius:
-                          8.0), // Устанавливаем радиус кнопки выбора значения
+                          8.0),
                   overlayShape: RoundSliderOverlayShape(
-                      overlayRadius: 16.0), // Устанавливаем радиус оверлея
+                      overlayRadius: 16.0),
                 ),
                 child: Slider(
                   value: _SavedDecodingVariables.sensitivityValue,
