@@ -8,8 +8,8 @@ part 'router.gr.dart';
 class AppRouter extends _$AppRouter {
   @override
   List<AutoRoute> get routes => [
-    MaterialRoute(page: TranslationRoute.page, initial: true),
-    MaterialRoute(page: DecodingRoute.page),
-    MaterialRoute(page: OptionsRoute.page),
-  ];
+        MaterialRoute(page: TranslationRoute.page, initial: true),
+        MaterialRoute(page: DecodingRoute.page),
+        MaterialRoute(page: OptionsRoute.page),
+      ];
 }

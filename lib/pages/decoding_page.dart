@@ -131,11 +131,8 @@ class _DecodingPageState extends State<DecodingPage> {
               SliderTheme(
                 data: const SliderThemeData(
                   trackHeight: 1.0,
-                  thumbShape: RoundSliderThumbShape(
-                      enabledThumbRadius:
-                          8.0),
-                  overlayShape: RoundSliderOverlayShape(
-                      overlayRadius: 16.0),
+                  thumbShape: RoundSliderThumbShape(enabledThumbRadius: 8.0),
+                  overlayShape: RoundSliderOverlayShape(overlayRadius: 16.0),
                 ),
                 child: Slider(
                   value: _SavedDecodingVariables.sensitivityValue,

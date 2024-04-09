@@ -30,9 +30,7 @@ class MorseBeeping extends MorseTransmitter {
 
   @override
   Future<void> transmit(
-      String morseCode,
-      int interval,
-      BuildContext context) async {
+      String morseCode, int interval, BuildContext context) async {
     if (isBeeping.value) {
       isBeeping.value = false;
       return;
@@ -92,7 +90,6 @@ class MorseBeeping extends MorseTransmitter {
   void dispose() {
     isBeeping.dispose();
   }
-
 }
 
 class MorseFlashing extends MorseTransmitter {
@@ -165,9 +162,9 @@ class MorseFlashing extends MorseTransmitter {
     await Future.delayed(Duration(milliseconds: milliseconds));
     await TorchLight.disableTorch();
   }
+
   @override
   void dispose() {
     isFlashing.dispose();
   }
 }
-

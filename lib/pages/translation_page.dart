@@ -8,6 +8,7 @@ import 'package:flash_talk/logic/morse_translation.dart';
 import 'package:sound_generator/sound_generator.dart';
 import 'package:sound_generator/waveTypes.dart';
 import 'package:flash_talk/logic/morse_transmission.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 @RoutePage()
 class TranslationPage extends StatefulWidget {
@@ -18,6 +19,9 @@ class TranslationPage extends StatefulWidget {
 }
 
 class _TranslationPageState extends State<TranslationPage> {
+  final SpeechToText _speechToText = SpeechToText();
+  bool isListening = false;
+
   final MorseTransmitter beeping = MorseBeeping();
   final MorseTransmitter flashing = MorseFlashing();
 
@@ -44,22 +48,71 @@ class _TranslationPageState extends State<TranslationPage> {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<int>(
-        valueListenable: SharedVariables.currentIndex,
-        builder: (context, value, child)
-    {
-      if (value != 0) {
-        flashing.isTransmitting.value = false;
-        beeping.isTransmitting.value = false;
-      }
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Перевод'),
-          automaticallyImplyLeading: false,
-        ),
-        body: buildTranslationBody(),
-        bottomNavigationBar: const CustomBottomNavigationBar(),
-      );
-    },
+      valueListenable: SharedVariables.currentIndex,
+      builder: (context, value, child) {
+        if (value != 0) {
+          flashing.isTransmitting.value = false;
+          beeping.isTransmitting.value = false;
+        }
+        return Scaffold(
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerFloat,
+          floatingActionButton: GestureDetector(
+            onTapUp: (details) {
+              setState(() {
+                isListening = false;
+              });
+              _speechToText.stop();
+            },
+            onTapDown: (details) async {
+              if (!isListening) {
+                var available = await _speechToText.initialize();
+                if (available) {
+                  setState(() {
+                    isListening = true;
+                    String localeId =
+                        SharedVariables.selectedLanguage == 'Русский'
+                            ? 'ru_RU'
+                            : 'en_US';
+                    _speechToText.listen(
+                      onResult: (result) {
+                        setState(() {
+                          inputText.text = result.recognizedWords;
+                          translatedText = MorseTranslation.translateToMorse(
+                              inputText.text, SharedVariables.selectedLanguage);
+                        });
+                      },
+                      localeId: localeId,
+                    );
+                  });
+                } else {
+                  setState(() {
+                    isListening = false;
+                  });
+                }
+              }
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFF1C1B1F), width: 10.0),
+              ),
+              child: CircleAvatar(
+                radius: 35.0,
+                backgroundColor: Colors.white,
+                child: Icon(isListening ? Icons.mic : Icons.mic_off,
+                    color: const Color(0xFF1C1B1F), size: 40.0),
+              ),
+            ),
+          ),
+          appBar: AppBar(
+            title: const Text('Перевод'),
+            automaticallyImplyLeading: false,
+          ),
+          body: buildTranslationBody(),
+          bottomNavigationBar: const CustomBottomNavigationBar(),
+        );
+      },
     );
   }
 

@@ -13,35 +13,41 @@ class CustomBottomNavigationBar extends StatefulWidget {
 class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: SharedVariables.currentIndex.value,
-      onTap: (index) {
-      setState(() {
-        SharedVariables.currentIndex.value = index;
-      });
-      switch (index) {
-        case 0:
-          context.router.navigate(const TranslationRoute());
-        case 1:
-          context.router.navigate(const DecodingRoute());
-        case 2:
-          context.router.navigate(const OptionsRoute());
-      }
-    },
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.translate),
-          label: 'Перевод',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.code),
-          label: 'Декодирование',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.settings),
-          label: 'Настройки',
-        ),
-      ],
+    return ValueListenableBuilder<int>(
+      valueListenable: SharedVariables.currentIndex,
+      builder: (context, value, child) {
+        return BottomNavigationBar(
+          currentIndex: value,
+          onTap: (index) {
+            SharedVariables.currentIndex.value = index;
+            switch (index) {
+              case 0:
+                context.router.navigate(const TranslationRoute());
+                break;
+              case 1:
+                context.router.navigate(const DecodingRoute());
+                break;
+              case 2:
+                context.router.navigate(const OptionsRoute());
+                break;
+            }
+          },
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.translate),
+              label: 'Перевод',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.code),
+              label: 'Декодирование',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings),
+              label: 'Настройки',
+            ),
+          ],
+        );
+      },
     );
   }
 }

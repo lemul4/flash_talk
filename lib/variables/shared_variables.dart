@@ -10,11 +10,4 @@ class SharedVariables {
   static waveTypes waveType = waveTypes.SQUAREWAVE;
   static int sampleRate = 96000;
   static String selectedLanguage = 'Русский';
-
-
-
-
-
 }
-
-

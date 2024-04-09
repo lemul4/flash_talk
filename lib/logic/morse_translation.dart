@@ -11,7 +11,8 @@ class MorseTranslation {
         .replaceAll('•', '.')
         .replaceAll('     ', ' / ');
 
-    final MorseLanguage selectedLanguage = MorseDictionary.getLanguage(language);
+    final MorseLanguage selectedLanguage =
+        MorseDictionary.getLanguage(language);
     List<String> morseChars = text.split(' ');
     List<String> translatedChars = [];
 
@@ -24,7 +25,8 @@ class MorseTranslation {
 
   static String translateToMorse(String text, String language) {
     text = text.toUpperCase();
-    final MorseLanguage selectedLanguage = MorseDictionary.getLanguage(language);
+    final MorseLanguage selectedLanguage =
+        MorseDictionary.getLanguage(language);
     List<String> morseList = [];
     for (int i = 0; i < text.length; i++) {
       String char = text[i];
