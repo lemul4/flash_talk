@@ -41,6 +41,7 @@ dependencies:
   flutter_localization: ^0.2.0
   sound_generator: ^0.0.9
   speech_to_text: ^6.6.1
+  url_launcher: ^6.2.5
 
 dev_dependencies:
   flutter_test:

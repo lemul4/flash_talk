@@ -10,4 +10,7 @@ class SharedVariables {
   static waveTypes waveType = waveTypes.SQUAREWAVE;
   static int sampleRate = 96000;
   static String selectedLanguage = 'Русский';
+  static double sensitivityValue = 15.0;
+  static int cameraX = 1360;
+  static int cameraY = 1024;
 }

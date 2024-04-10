@@ -36,10 +36,8 @@ class _TranslationPageState extends State<TranslationPage> {
     super.dispose();
   }
 
-  bool isMorseBeeping = false;
   bool isSwapped = false;
   String translatedText = '';
-  double frequency = 1000;
   double balance = 0;
   double volume = 1;
   waveTypes waveType = waveTypes.SQUAREWAVE;
@@ -65,30 +63,33 @@ class _TranslationPageState extends State<TranslationPage> {
               _speechToText.stop();
             },
             onTapDown: (details) async {
-              if (!isListening) {
-                var available = await _speechToText.initialize();
-                if (available) {
-                  setState(() {
-                    isListening = true;
-                    String localeId =
-                        SharedVariables.selectedLanguage == 'Русский'
-                            ? 'ru_RU'
-                            : 'en_US';
-                    _speechToText.listen(
-                      onResult: (result) {
-                        setState(() {
-                          inputText.text = result.recognizedWords;
-                          translatedText = MorseTranslation.translateToMorse(
-                              inputText.text, SharedVariables.selectedLanguage);
-                        });
-                      },
-                      localeId: localeId,
-                    );
-                  });
-                } else {
-                  setState(() {
-                    isListening = false;
-                  });
+              if (!isSwapped) {
+                if (!isListening) {
+                  var available = await _speechToText.initialize();
+                  if (available) {
+                    setState(() {
+                      isListening = true;
+                      String localeId =
+                      SharedVariables.selectedLanguage == 'Русский'
+                          ? 'ru_RU'
+                          : 'en_US';
+                      _speechToText.listen(
+                        onResult: (result) {
+                          setState(() {
+                            inputText.text = result.recognizedWords;
+                            translatedText = MorseTranslation.translateToMorse(
+                                inputText.text,
+                                SharedVariables.selectedLanguage);
+                          });
+                        },
+                        localeId: localeId,
+                      );
+                    });
+                  } else {
+                    setState(() {
+                      isListening = false;
+                    });
+                  }
                 }
               }
             },
@@ -221,7 +222,7 @@ class _TranslationPageState extends State<TranslationPage> {
               _buildIconButton(
                   icon: Icons.volume_up,
                   onPressed: () {
-                    SoundGenerator.setFrequency(frequency);
+                    SoundGenerator.setFrequency(SharedVariables.frequency);
                     SoundGenerator.setWaveType(waveType);
                     SoundGenerator.setBalance(balance);
                     SoundGenerator.setVolume(volume);
@@ -346,7 +347,7 @@ class _TranslationPageState extends State<TranslationPage> {
   void initState() {
     super.initState();
     SoundGenerator.init(sampleRate);
-    SoundGenerator.setFrequency(frequency);
+    SoundGenerator.setFrequency(SharedVariables.frequency);
     SoundGenerator.setBalance(balance);
     SoundGenerator.setVolume(volume);
     SoundGenerator.setWaveType(waveTypes.SINUSOIDAL);

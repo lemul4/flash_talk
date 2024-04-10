@@ -104,21 +104,39 @@ class _DecodingPageState extends State<DecodingPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              ElevatedButton(
-                onPressed: isDecodingBlinksActive
-                    ? null
-                    : () {
-                        startDecodingBlinks();
-                      },
-                child: const Text('Моргания'),
+              InkWell(
+                onTap: isDecodingBlinksActive ? null : startDecodingBlinks,
+                child: Container(
+                  padding: const EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF1C1B1F),
+                    border: Border.all(color: Colors.white),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Моргания',
+                      style: const TextStyle(fontSize: 16.0, ),
+                    ),
+                  ),
+                ),
               ),
-              ElevatedButton(
-                onPressed: isDecodingFlashesActive
-                    ? null
-                    : () {
-                        startDecodingFlashes();
-                      },
-                child: const Text('Вспышки'),
+              InkWell(
+                onTap: isDecodingBlinksActive ? null : startDecodingBlinks,
+                child: Container(
+                  padding: const EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF1C1B1F),
+                    border: Border.all(color: Colors.white),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Вспышки',
+                      style: const TextStyle(fontSize: 16.0, ),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
