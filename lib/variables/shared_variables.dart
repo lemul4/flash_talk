@@ -1,3 +1,4 @@
+import 'package:camera/camera.dart';
 import 'package:sound_generator/waveTypes.dart';
 import 'package:flutter/material.dart';
 
@@ -11,6 +12,6 @@ class SharedVariables {
   static int sampleRate = 96000;
   static String selectedLanguage = 'Русский';
   static double sensitivityValue = 15.0;
-  static int cameraX = 1360;
-  static int cameraY = 1024;
+  static ResolutionPreset cameraResolution = ResolutionPreset.low;
+
 }

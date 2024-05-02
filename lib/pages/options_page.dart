@@ -1,3 +1,4 @@
+import 'package:camera/camera.dart';
 import 'package:flash_talk/routes/bottom_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:auto_route/auto_route.dart';
@@ -71,18 +72,13 @@ class _OptionsPageState extends State<OptionsPage> {
           const Divider(),
           const Text('Разрешение камеры'),
           DropdownButton<String>(
-            value: '${SharedVariables.cameraX}x${SharedVariables.cameraY}',
+            value: resolutionPresetToString(SharedVariables.cameraResolution),
             items: <String>[
-              '320x240',
-              '640x480',
-              '800x600',
-              '1024x768',
-              '1280x960',
-              '1360x1024',
-              '1440x1080',
-              '1600x1200',
-              '1920x1440',
-              '2048x1536',
+              '240p',
+              '480p',
+              '720p',
+              '1080p',
+              '2160p',
             ].map<DropdownMenuItem<String>>((String value) {
               return DropdownMenuItem<String>(
                 value: value,
@@ -91,36 +87,28 @@ class _OptionsPageState extends State<OptionsPage> {
             }).toList(),
             onChanged: (String? newValue) {
               setState(() {
-                var dimensions = newValue!.split('x');
-                SharedVariables.cameraX = int.parse(dimensions[0]);
-                SharedVariables.cameraY = int.parse(dimensions[1]);
+                SharedVariables.cameraResolution = stringToResolutionPreset(newValue);
               });
             },
           ),
           const Divider(),
-          InkWell(
-            onTap: () {
+          ElevatedButton(
+            onPressed: () {
               setState(() {
-
+                // Здесь устанавливаются значения по умолчанию
                 SharedVariables.morseInterval = 150;
                 SharedVariables.frequency = 1000;
                 SharedVariables.sensitivityValue = 15.0;
-                SharedVariables.cameraX = 1360;
-                SharedVariables.cameraY = 1024;
+                SharedVariables.cameraResolution = ResolutionPreset.low;
+
               });
             },
-            child: Container(
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.white),
-                borderRadius: BorderRadius.circular(1000.0),
-              ),
-              child: const Center(
-                child: Text(
-                  'Сбросить настройки',
-                  style: TextStyle(fontSize: 16.0, ),
-                ),
-              ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white, // цвет кнопки
+            ),
+            child: Text(
+              'Сбросить настройки',
+              style: TextStyle(color: Color(0xFF1C1B1F)), // цвет текста
             ),
           ),
           const Divider(),
@@ -135,5 +123,38 @@ class _OptionsPageState extends State<OptionsPage> {
       ),
       bottomNavigationBar: const CustomBottomNavigationBar(),
     );
+  }
+  String resolutionPresetToString(ResolutionPreset preset) {
+    switch (preset) {
+      case ResolutionPreset.low:
+        return '240p';
+      case ResolutionPreset.medium:
+        return '480p';
+      case ResolutionPreset.high:
+        return '720p';
+      case ResolutionPreset.veryHigh:
+        return '1080p';
+      case ResolutionPreset.ultraHigh:
+        return '2160p';
+      default:
+        return '480p';
+    }
+  }
+
+  ResolutionPreset stringToResolutionPreset(String? resolution) {
+    switch (resolution) {
+      case '240p':
+        return ResolutionPreset.low;
+      case '480p':
+        return ResolutionPreset.medium;
+      case '720p':
+        return ResolutionPreset.high;
+      case '1080p':
+        return ResolutionPreset.veryHigh;
+      case '2160p':
+        return ResolutionPreset.ultraHigh;
+      default:
+        return ResolutionPreset.medium;
+    }
   }
 }
