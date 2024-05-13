@@ -60,8 +60,8 @@ class _OptionsPageState extends State<OptionsPage> {
           ),
           Slider(
             value: SharedVariables.sensitivityValue,
-            min: 1,
-            max: 30,
+            min: 0,
+            max: 255,
             label: SharedVariables.sensitivityValue.round().toString(),
             onChanged: (double value) {
               setState(() {
@@ -98,7 +98,7 @@ class _OptionsPageState extends State<OptionsPage> {
                 // Здесь устанавливаются значения по умолчанию
                 SharedVariables.morseInterval = 150;
                 SharedVariables.frequency = 1000;
-                SharedVariables.sensitivityValue = 15.0;
+                SharedVariables.sensitivityValue = 128.0;
                 SharedVariables.cameraResolution = ResolutionPreset.low;
 
               });
@@ -106,7 +106,7 @@ class _OptionsPageState extends State<OptionsPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white, // цвет кнопки
             ),
-            child: Text(
+            child: const Text(
               'Сбросить настройки',
               style: TextStyle(color: Color(0xFF1C1B1F)), // цвет текста
             ),

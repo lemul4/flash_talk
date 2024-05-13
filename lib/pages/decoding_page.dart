@@ -1,5 +1,8 @@
 import 'dart:async';
-
+import 'dart:ffi';
+import 'dart:io';
+import 'package:ffi/ffi.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flash_talk/variables/shared_variables.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +13,7 @@ import 'package:opencv_dart/opencv_dart.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
-
+import 'dart:developer';
 
 class _SavedDecodingVariables {
   static double sensitivityValue = 25.0;
@@ -39,8 +42,6 @@ class _DecodingPageState extends State<DecodingPage> {
   late ValueNotifier<String> _textCamera;
   late ValueNotifier<String> _textDecoding;
 
-
-
   @override
   void initState() {
     super.initState();
@@ -50,7 +51,6 @@ class _DecodingPageState extends State<DecodingPage> {
     _textCamera = ValueNotifier("");
     _textDecoding = ValueNotifier("");
     _adjustedImg = ValueNotifier(Uint8List(0));
-
   }
 
   Future<void> initCamera() async {
@@ -64,7 +64,6 @@ class _DecodingPageState extends State<DecodingPage> {
       setState(() {});
     });
   }
-
 
   @override
   void dispose() {
@@ -81,7 +80,9 @@ class _DecodingPageState extends State<DecodingPage> {
         title: const Text('Декодирование'),
         automaticallyImplyLeading: false,
       ),
-      body: controller.value.isInitialized ? buildDecodingBody() : Center(child: CircularProgressIndicator()),
+      body: controller.value.isInitialized
+          ? buildDecodingBody()
+          : Center(child: CircularProgressIndicator()),
       bottomNavigationBar: const CustomBottomNavigationBar(),
     );
   }
@@ -92,33 +93,33 @@ class _DecodingPageState extends State<DecodingPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ValueListenableBuilder<Uint8List>(
-            valueListenable: _adjustedImg,
-            builder: (_, adjustedImg, __) {
-              if (cameraImage == null) {
-                return AspectRatio(
-                  aspectRatio: 4 / 3,
+          AspectRatio(
+            aspectRatio: 4 / 3,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: CameraPreview(controller),
+
+                  ///Image.memory(
+                  ///  adjustedImg,
+                  ///  gaplessPlayback: true,
+                  ///   fit: BoxFit.fill,),
+                ),
+                Align(
+                  alignment: Alignment.center,
                   child: Container(
+                    height: 75, // Высота квадрата
+                    width: 75, // Ширина квадрата
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: Colors.grey,
-                        width: 2.0,
+                        color: Colors.red, // Цвет границы
+                        width: 3, // Толщина границы
                       ),
                     ),
                   ),
-                );
-              }
-              return AspectRatio(
-                aspectRatio: 4 / 3,
-                child: Image.memory(
-                  adjustedImg,
-                  width: cameraImage!.width.toDouble(),
-                  height: cameraImage!.height.toDouble(),
-                  gaplessPlayback: true,
-                  fit: BoxFit.cover,
                 ),
-              );
-            },
+              ],
+            ),
           ),
           // Плейсхолдер 4:3
           const SizedBox(height: 16.0),
@@ -162,7 +163,7 @@ class _DecodingPageState extends State<DecodingPage> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content:
-                                Text('Текст скопирован в буфер обмена'),
+                                    Text('Текст скопирован в буфер обмена'),
                               ),
                             );
                           },
@@ -180,11 +181,14 @@ class _DecodingPageState extends State<DecodingPage> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               ElevatedButton(
-                onPressed:   () {
-                  startDecodingBlinks();
+                onPressed: () {
+                  setState(() {
+                    startDecodingBlinks();
+                  });
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDecodingBlinksActive ? Colors.grey : Colors.white,
+                  backgroundColor:
+                      isDecodingBlinksActive ? Colors.grey : Colors.white,
                 ),
                 child: const Text(
                   'Моргания',
@@ -193,10 +197,13 @@ class _DecodingPageState extends State<DecodingPage> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  startDecodingFlashes();
+                  setState(() {
+                    startDecodingFlashes();
+                  });
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDecodingFlashesActive ? Colors.grey : Colors.white,
+                  backgroundColor:
+                      isDecodingFlashesActive ? Colors.grey : Colors.white,
                 ),
                 child: const Text(
                   'Вспышки',
@@ -210,23 +217,18 @@ class _DecodingPageState extends State<DecodingPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                  'Чувствительность ${_SavedDecodingVariables.sensitivityValue.toInt()}м'),
-              SliderTheme(
-                data: const SliderThemeData(
-                  trackHeight: 1.0,
-                  thumbShape: RoundSliderThumbShape(enabledThumbRadius: 8.0),
-                  overlayShape: RoundSliderOverlayShape(overlayRadius: 16.0),
-                ),
-                child: Slider(
-                  value: _SavedDecodingVariables.sensitivityValue,
-                  min: 1.0,
-                  max: 50.0,
-                  onChanged: (value) {
-                    setState(() {
-                      _SavedDecodingVariables.sensitivityValue = value;
-                    });
-                  },
-                ),
+                'Светочувствительность: ${SharedVariables.sensitivityValue.round()} м',
+              ),
+              Slider(
+                value: SharedVariables.sensitivityValue,
+                min: 0,
+                max: 255,
+                label: SharedVariables.sensitivityValue.round().toString(),
+                onChanged: (double value) {
+                  setState(() {
+                    SharedVariables.sensitivityValue = value.roundToDouble();
+                  });
+                },
               ),
             ],
           ),
@@ -248,46 +250,139 @@ class _DecodingPageState extends State<DecodingPage> {
       controller.stopImageStream();
       cameraImage = null;
       timer?.cancel();
-
-      controller.startImageStream((image) {
-        cameraImage = image;
-      });
-
-      timer = Timer.periodic(Duration(milliseconds: 50), (Timer t) {
-        if (cameraImage != null) {
-          print(cameraImage!.format.group);
-          print(cameraImage?.width.toDouble());
-          print(cameraImage?.height.toDouble());
-          img.Image yuv = img.Image.fromBytes(
-            cameraImage!.planes[0].bytesPerRow,
-            cameraImage!.height,
-            cameraImage!.planes[0].bytes,
-            format: img.Format.luminance,
-          );
-          yuv = img.copyRotate(yuv, 90);
-
-          Uint8List png = img.encodePng(yuv) as Uint8List;
-          _adjustedImg.value = png;
-        }
-      });
-
       setState(() {});
     }
   }
 
-  void startDecodingFlashes() {
+  Future<void> startDecodingFlashes() async {
     isDecodingBlinksActive = false;
     if (isDecodingFlashesActive) {
       isDecodingFlashesActive = false;
-    } else {
       controller.stopImageStream();
       cameraImage = null;
       timer?.cancel();
+      setState(() {});
+    } else {
       isDecodingFlashesActive = true;
+      controller.stopImageStream();
+      cameraImage = null;
+      timer?.cancel();
+
+      int frameCount = 0;
+      late DateTime? flashStartTime;
+      late DateTime? flashEndTime;
+
+      controller.startImageStream((image) {
+        cameraImage = image;
+      });
+      DateTime startTime = DateTime.now();
+      flashStartTime = DateTime.now();
+      flashEndTime = DateTime.now();
+      flashStartTime = null;
+      while (isDecodingFlashesActive) {
+        if (cameraImage != null) {
+          frameCount++;
+          final bytes = cameraImage!.planes[0].bytes;
+          const rowLength = 320;
+          const columnLength = 240;
+          List<List<int>> matrix = List.generate(
+              rowLength, (i) => List.generate(columnLength, (j) => 0));
+
+          for (var i = 0; i < columnLength; i++) {
+            for (var j = 0; j < rowLength; j++) {
+              matrix[j][columnLength - i - 1] = bytes[i * rowLength + j];
+            }
+          }
+
+          late double meanLight;
+          int sumLights = 0;
+          int k = 0;
+          for (var i = 94; i < 145; i++) {
+            for (var j = 134; j < 185; j++) {
+              sumLights = sumLights + matrix[j][i];
+              k++;
+            }
+          }
+          meanLight = sumLights / k;
+          if (meanLight > SharedVariables.sensitivityValue) {
+            if (flashStartTime == null) {
+              flashStartTime = DateTime.now();
+              if (flashEndTime != null) {
+                if (DateTime.now().difference(flashEndTime).inMilliseconds >
+                        3 * SharedVariables.morseInterval -
+                            SharedVariables.morseInterval &&
+                    DateTime.now().difference(flashEndTime).inMilliseconds <
+                        3 * SharedVariables.morseInterval +
+                            SharedVariables.morseInterval) {
+                  _SavedDecodingVariables.decodingText += " ";
+                  _textDecoding.value = _SavedDecodingVariables.decodingText;
+                }
+                if (DateTime.now().difference(flashEndTime).inMilliseconds >
+                    7 * SharedVariables.morseInterval -
+                        SharedVariables.morseInterval) {
+                  _SavedDecodingVariables.decodingText += " / ";
+                  _textDecoding.value = _SavedDecodingVariables.decodingText;
+                }
+                flashEndTime = null;
+              }
+            }
+          } else {
+            if (flashEndTime == null) {
+              flashEndTime = DateTime.now();
+              if (flashStartTime != null) {
+                if (DateTime.now().difference(flashStartTime).inMilliseconds >
+                        SharedVariables.morseInterval -
+                            SharedVariables.morseInterval * 0.8 &&
+                    DateTime.now().difference(flashStartTime).inMilliseconds <
+                        SharedVariables.morseInterval +
+                            SharedVariables.morseInterval * 0.8) {
+                  _SavedDecodingVariables.decodingText += ".";
+                  _textDecoding.value = _SavedDecodingVariables.decodingText;
+                }
+                if (DateTime.now().difference(flashStartTime).inMilliseconds >
+                        3 * SharedVariables.morseInterval -
+                            SharedVariables.morseInterval &&
+                    DateTime.now().difference(flashStartTime).inMilliseconds <
+                        3 * SharedVariables.morseInterval +
+                            SharedVariables.morseInterval) {
+                  _SavedDecodingVariables.decodingText += "-";
+                  _textDecoding.value = _SavedDecodingVariables.decodingText;
+                }
+                flashStartTime = null;
+              }
+            }
+          }
+
+          ///for (var i = 0; i < matrix.length; i++) {
+          ///print(matrix[i]);
+          /// }
+          print(meanLight);
+          """img.Image outputImage = img.Image.fromBytes(
+            cameraImage!.width,
+            cameraImage!.height,
+            cameraImage!.planes[0].bytes,
+            format: img.Format.luminance,
+          );
+
+          outputImage = img.copyRotate(outputImage, 90);
+          Uint8List png = img.encodePng(outputImage) as Uint8List;
+          _adjustedImg.value = png;""";
+
+          if (DateTime.now().difference(startTime).inSeconds >= 1) {
+            double fps =
+                frameCount / DateTime.now().difference(startTime).inSeconds;
+            print('FPS: $fps');
+            frameCount = 0;
+            startTime = DateTime.now();
+          }
+          cameraImage = null;
+        } else {
+          await Future.delayed(const Duration(microseconds: 1));
+        }
+        setState(() {});
+      }
+
+      setState(() {});
     }
-    setState(() {
-      // Останавливаем другую функцию, если активна
-    });
-    // При окончании выполнения функции isDecodingFlashesActive = false
   }
 }
