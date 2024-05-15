@@ -1,8 +1,6 @@
 import 'package:sound_generator/sound_generator.dart';
-import 'package:sound_generator/waveTypes.dart';
 import 'package:torch_light/torch_light.dart';
 import 'package:flutter/material.dart';
-import 'package:flash_talk/variables/shared_variables.dart';
 import 'dart:async';
 
 abstract class MorseTransmitter {

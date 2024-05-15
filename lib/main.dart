@@ -1,7 +1,16 @@
+import 'package:camera/camera.dart';
 import 'package:flash_talk/routes/router.dart';
+import 'package:flash_talk/variables/shared_variables.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+
+Future<void> main() async {
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    SharedVariables.cameras = await availableCameras();
+    print(SharedVariables.cameras.length);
+  } on CameraException {
+    print('Error: Could not get camera list');}
   runApp(MyApp());
 }
 

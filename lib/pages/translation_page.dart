@@ -40,7 +40,7 @@ class _TranslationPageState extends State<TranslationPage> {
   String translatedText = '';
   double balance = 0;
   double volume = 1;
-  waveTypes waveType = waveTypes.SQUAREWAVE;
+  waveTypes waveType = waveTypes.SINUSOIDAL;
   int sampleRate = 44100;
 
   @override
@@ -350,6 +350,6 @@ class _TranslationPageState extends State<TranslationPage> {
     SoundGenerator.setFrequency(SharedVariables.frequency);
     SoundGenerator.setBalance(balance);
     SoundGenerator.setVolume(volume);
-    SoundGenerator.setWaveType(waveTypes.SINUSOIDAL);
+    SoundGenerator.setWaveType(waveType);
   }
 }

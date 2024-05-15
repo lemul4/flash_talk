@@ -1,22 +1,17 @@
 import 'dart:async';
-import 'dart:ffi';
-import 'dart:io';
-import 'package:ffi/ffi.dart';
-import 'package:path_provider/path_provider.dart';
+
 import 'package:flash_talk/variables/shared_variables.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flash_talk/routes/bottom_navigation_bar.dart';
 import 'package:camera/camera.dart';
-import 'package:opencv_dart/opencv_dart.dart';
-import 'package:opencv_dart/opencv_dart.dart' as cv;
 import 'package:flutter/foundation.dart';
-import 'package:image/image.dart' as img;
-import 'dart:developer';
+
+import '../main.dart';
+
 
 class _SavedDecodingVariables {
-  static double sensitivityValue = 25.0;
   static String decodingText = "";
 }
 
@@ -31,32 +26,31 @@ class DecodingPage extends StatefulWidget {
 class _DecodingPageState extends State<DecodingPage> {
   bool isDecodingFlashesActive = false;
   bool isDecodingBlinksActive = false;
-  late List<CameraDescription> cameras;
   late CameraController controller;
   CameraImage? cameraImage;
   Uint8List? imageData;
-  late ValueNotifier<Uint8List> _adjustedImg;
   Timer? timer;
   late double fpsCamera;
   late double fpsDecoding;
-  late ValueNotifier<String> _textCamera;
   late ValueNotifier<String> _textDecoding;
+  late ValueNotifier<String?> _fpsNotifier;
+  late ValueNotifier<String?> _meanLightNotifier;
 
   @override
   void initState() {
     super.initState();
-    initCamera();
     fpsCamera = 0;
     fpsDecoding = 0;
-    _textCamera = ValueNotifier("");
+    _fpsNotifier = ValueNotifier<String?>(null);
+    _meanLightNotifier = ValueNotifier<String?>(null);
     _textDecoding = ValueNotifier("");
-    _adjustedImg = ValueNotifier(Uint8List(0));
+    initCamera();
+
   }
 
   Future<void> initCamera() async {
-    cameras = await availableCameras();
-    controller = CameraController(cameras[0], SharedVariables.cameraResolution,
-        enableAudio: false);
+    controller =
+        CameraController(SharedVariables.cameras[0], SharedVariables.cameraResolution, enableAudio: false);
     controller.initialize().then((_) {
       if (!mounted) {
         return;
@@ -70,6 +64,8 @@ class _DecodingPageState extends State<DecodingPage> {
     controller.dispose();
     timer?.cancel();
     controller.stopImageStream();
+    _meanLightNotifier.dispose();
+    _fpsNotifier.dispose();
     super.dispose();
   }
 
@@ -108,12 +104,12 @@ class _DecodingPageState extends State<DecodingPage> {
                 Align(
                   alignment: Alignment.center,
                   child: Container(
-                    height: 75, // Высота квадрата
-                    width: 75, // Ширина квадрата
+                    height: 50,
+                    width: 50,
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: Colors.red, // Цвет границы
-                        width: 3, // Толщина границы
+                        color: Colors.red,
+                        width: 3,
                       ),
                     ),
                   ),
@@ -121,8 +117,33 @@ class _DecodingPageState extends State<DecodingPage> {
               ],
             ),
           ),
-          // Плейсхолдер 4:3
           const SizedBox(height: 16.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              ValueListenableBuilder<String?>(
+                valueListenable: _fpsNotifier,
+                builder: (context, value, child) {
+                  if (value == null) {
+                    return const SizedBox(height: 20.0); // Ничего не отображается, если значение null
+                  } else {
+                    return Text(value);
+                  }
+                },
+              ),
+              ValueListenableBuilder<String?>(
+                valueListenable: _meanLightNotifier,
+                builder: (context, value, child) {
+                  if (value == null) {
+                    return const SizedBox(height: 20.0); // Ничего не отображается, если значение null
+                  } else {
+                    return Text(value);
+                  }
+                },
+              ),
+            ],
+          ),
+
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(8),
@@ -175,7 +196,6 @@ class _DecodingPageState extends State<DecodingPage> {
               ),
             ),
           ),
-
           const SizedBox(height: 16.0),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -255,133 +275,139 @@ class _DecodingPageState extends State<DecodingPage> {
   }
 
   Future<void> startDecodingFlashes() async {
-    isDecodingBlinksActive = false;
     if (isDecodingFlashesActive) {
       isDecodingFlashesActive = false;
       controller.stopImageStream();
       cameraImage = null;
       timer?.cancel();
+      _fpsNotifier = ValueNotifier<String?>(null);
+      _meanLightNotifier = ValueNotifier<String?>(null);
       setState(() {});
     } else {
       isDecodingFlashesActive = true;
-      controller.stopImageStream();
       cameraImage = null;
       timer?.cancel();
-
-      int frameCount = 0;
-      late DateTime? flashStartTime;
-      late DateTime? flashEndTime;
 
       controller.startImageStream((image) {
         cameraImage = image;
       });
-      DateTime startTime = DateTime.now();
-      flashStartTime = DateTime.now();
-      flashEndTime = DateTime.now();
-      flashStartTime = null;
-      while (isDecodingFlashesActive) {
-        if (cameraImage != null) {
-          frameCount++;
-          final bytes = cameraImage!.planes[0].bytes;
-          const rowLength = 320;
-          const columnLength = 240;
-          List<List<int>> matrix = List.generate(
-              rowLength, (i) => List.generate(columnLength, (j) => 0));
 
-          for (var i = 0; i < columnLength; i++) {
-            for (var j = 0; j < rowLength; j++) {
-              matrix[j][columnLength - i - 1] = bytes[i * rowLength + j];
-            }
-          }
+      decodeFlashes();
 
-          late double meanLight;
-          int sumLights = 0;
-          int k = 0;
-          for (var i = 94; i < 145; i++) {
-            for (var j = 134; j < 185; j++) {
-              sumLights = sumLights + matrix[j][i];
-              k++;
-            }
-          }
-          meanLight = sumLights / k;
-          if (meanLight > SharedVariables.sensitivityValue) {
-            if (flashStartTime == null) {
-              flashStartTime = DateTime.now();
-              if (flashEndTime != null) {
-                if (DateTime.now().difference(flashEndTime).inMilliseconds >
-                        3 * SharedVariables.morseInterval -
-                            SharedVariables.morseInterval &&
-                    DateTime.now().difference(flashEndTime).inMilliseconds <
-                        3 * SharedVariables.morseInterval +
-                            SharedVariables.morseInterval) {
-                  _SavedDecodingVariables.decodingText += " ";
-                  _textDecoding.value = _SavedDecodingVariables.decodingText;
-                }
-                if (DateTime.now().difference(flashEndTime).inMilliseconds >
-                    7 * SharedVariables.morseInterval -
-                        SharedVariables.morseInterval) {
-                  _SavedDecodingVariables.decodingText += " / ";
-                  _textDecoding.value = _SavedDecodingVariables.decodingText;
-                }
-                flashEndTime = null;
-              }
-            }
-          } else {
-            if (flashEndTime == null) {
-              flashEndTime = DateTime.now();
-              if (flashStartTime != null) {
-                if (DateTime.now().difference(flashStartTime).inMilliseconds >
-                        SharedVariables.morseInterval -
-                            SharedVariables.morseInterval * 0.8 &&
-                    DateTime.now().difference(flashStartTime).inMilliseconds <
-                        SharedVariables.morseInterval +
-                            SharedVariables.morseInterval * 0.8) {
-                  _SavedDecodingVariables.decodingText += ".";
-                  _textDecoding.value = _SavedDecodingVariables.decodingText;
-                }
-                if (DateTime.now().difference(flashStartTime).inMilliseconds >
-                        3 * SharedVariables.morseInterval -
-                            SharedVariables.morseInterval &&
-                    DateTime.now().difference(flashStartTime).inMilliseconds <
-                        3 * SharedVariables.morseInterval +
-                            SharedVariables.morseInterval) {
-                  _SavedDecodingVariables.decodingText += "-";
-                  _textDecoding.value = _SavedDecodingVariables.decodingText;
-                }
-                flashStartTime = null;
-              }
-            }
-          }
+      setState(() {});
+    }
+  }
 
-          ///for (var i = 0; i < matrix.length; i++) {
-          ///print(matrix[i]);
-          /// }
-          print(meanLight);
-          """img.Image outputImage = img.Image.fromBytes(
-            cameraImage!.width,
-            cameraImage!.height,
-            cameraImage!.planes[0].bytes,
-            format: img.Format.luminance,
-          );
+  Future<void> decodeFlashes() async {
+    int frameCount = 0;
+    DateTime? flashStartTime;
+    DateTime? flashEndTime;
+    DateTime startTime = DateTime.now();
 
-          outputImage = img.copyRotate(outputImage, 90);
-          Uint8List png = img.encodePng(outputImage) as Uint8List;
-          _adjustedImg.value = png;""";
+    const double startRowPercentage = 0.4;
+    const double endRowPercentage = 0.6;
+    const double startColPercentage = 0.4;
+    const double endColPercentage = 0.6;
 
-          if (DateTime.now().difference(startTime).inSeconds >= 1) {
-            double fps =
-                frameCount / DateTime.now().difference(startTime).inSeconds;
-            print('FPS: $fps');
-            frameCount = 0;
-            startTime = DateTime.now();
-          }
-          cameraImage = null;
-        } else {
-          await Future.delayed(const Duration(microseconds: 1));
-        }
-        setState(() {});
+    while (isDecodingFlashesActive) {
+      if(SharedVariables.currentIndex.value != 1) {
+        isDecodingFlashesActive = false;
+        controller.stopImageStream();
+        cameraImage = null;
+        timer?.cancel();
+        _fpsNotifier = ValueNotifier<String?>(null);
+        _meanLightNotifier = ValueNotifier<String?>(null);
+        break;
       }
+      if (cameraImage != null) {
+        frameCount++;
+        final bytes = cameraImage!.planes[0].bytes;
+        int rowLength = cameraImage!.width;
+        int columnLength = cameraImage!.height;
 
+        int startRow = (startRowPercentage * rowLength).toInt();
+        int endRow = (endRowPercentage * rowLength).toInt();
+        int startCol = (startColPercentage * columnLength).toInt();
+        int endCol = (endColPercentage * columnLength).toInt();
+        int numPixels = (endRow - startRow) * (endCol - startCol);
+
+        int sumLights = 0;
+        for (var i = startCol; i < endCol; i++) {
+          for (var j = startRow; j < endRow; j++) {
+            sumLights += bytes[i * rowLength + j];
+          }
+        }
+
+        int meanLight = sumLights ~/ numPixels;
+        _meanLightNotifier.value = 'Яркость: $meanLight';
+
+        if (meanLight > SharedVariables.sensitivityValue) {
+          if (flashStartTime == null) {
+            flashStartTime = DateTime.now();
+            if (flashEndTime != null) {
+              int duration =
+                  DateTime.now().difference(flashEndTime).inMilliseconds;
+              if (duration >
+                      3 * SharedVariables.morseInterval -
+                          SharedVariables.morseInterval &&
+                  duration <
+                      3 * SharedVariables.morseInterval +
+                          SharedVariables.morseInterval) {
+                _SavedDecodingVariables.decodingText += " ";
+              } else if (duration >
+                  7 * SharedVariables.morseInterval -
+                      SharedVariables.morseInterval) {
+                _SavedDecodingVariables.decodingText += " / ";
+              }
+              _textDecoding.value = _SavedDecodingVariables.decodingText;
+              flashEndTime = null;
+            }
+          }
+        } else {
+          if (flashEndTime == null) {
+            flashEndTime = DateTime.now();
+            if (flashStartTime != null) {
+              int duration =
+                  DateTime.now().difference(flashStartTime).inMilliseconds;
+              if (duration > SharedVariables.morseInterval * 0.2 &&
+                  duration < SharedVariables.morseInterval * 1.8) {
+                _SavedDecodingVariables.decodingText += "●";
+              } else if (duration >
+                      3 * SharedVariables.morseInterval -
+                          SharedVariables.morseInterval &&
+                  duration <
+                      3 * SharedVariables.morseInterval +
+                          SharedVariables.morseInterval) {
+                _SavedDecodingVariables.decodingText += "—";
+              }
+              _textDecoding.value = _SavedDecodingVariables.decodingText;
+              flashStartTime = null;
+            }
+          }
+        }
+
+        """img.Image outputImage = img.Image.fromBytes(
+          cameraImage!.width,
+          cameraImage!.height,
+          bytes,
+          format: img.Format.luminance,
+        );
+
+        outputImage = img.copyRotate(outputImage, 90);
+        Uint8List png = Uint8List.fromList(img.encodePng(outputImage));
+        _adjustedImg.value = png;""";
+
+        if (DateTime.now().difference(startTime).inSeconds >= 1) {
+          int fps =
+          frameCount ~/ DateTime.now().difference(startTime).inSeconds;
+          _fpsNotifier.value = 'ФПС: $fps';
+          frameCount = 0;
+          startTime = DateTime.now();
+        }
+        cameraImage = null;
+      } else {
+        await Future.delayed(const Duration(microseconds: 1));
+      }
       setState(() {});
     }
   }
