@@ -50,7 +50,8 @@ class _DecodingPageState extends State<DecodingPage> {
 
   Future<void> initCamera() async {
     controller =
-        CameraController(SharedVariables.cameras[0], SharedVariables.cameraResolution, enableAudio: false);
+        CameraController(SharedVariables.cameras[0], SharedVariables.cameraResolution, enableAudio: false, fps: 60);
+    controller.setFocusMode(FocusMode.locked);
     controller.initialize().then((_) {
       if (!mounted) {
         return;
@@ -78,7 +79,7 @@ class _DecodingPageState extends State<DecodingPage> {
       ),
       body: controller.value.isInitialized
           ? buildDecodingBody()
-          : Center(child: CircularProgressIndicator()),
+          : const Center(child: CircularProgressIndicator()),
       bottomNavigationBar: const CustomBottomNavigationBar(),
     );
   }
@@ -125,7 +126,7 @@ class _DecodingPageState extends State<DecodingPage> {
                 valueListenable: _fpsNotifier,
                 builder: (context, value, child) {
                   if (value == null) {
-                    return const SizedBox(height: 20.0); // Ничего не отображается, если значение null
+                    return const SizedBox(height: 20.0);
                   } else {
                     return Text(value);
                   }
@@ -135,7 +136,7 @@ class _DecodingPageState extends State<DecodingPage> {
                 valueListenable: _meanLightNotifier,
                 builder: (context, value, child) {
                   if (value == null) {
-                    return const SizedBox(height: 20.0); // Ничего не отображается, если значение null
+                    return const SizedBox(height: 20.0);
                   } else {
                     return Text(value);
                   }
@@ -237,7 +238,7 @@ class _DecodingPageState extends State<DecodingPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                'Светочувствительность: ${SharedVariables.sensitivityValue.round()} м',
+                'Светочувствительность: ${SharedVariables.sensitivityValue.round()}',
               ),
               Slider(
                 value: SharedVariables.sensitivityValue,
@@ -287,6 +288,7 @@ class _DecodingPageState extends State<DecodingPage> {
       isDecodingFlashesActive = true;
       cameraImage = null;
       timer?.cancel();
+      controller.setFocusMode(FocusMode.locked);
 
       controller.startImageStream((image) {
         cameraImage = image;

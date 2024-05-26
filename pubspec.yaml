@@ -44,7 +44,7 @@ dependencies:
   url_launcher: ^6.2.5
   image_picker: ^1.1.0
   opencv_dart: ^1.0.2+1
-  camera: ^0.10.5+9
+  camera: ^0.11.0
   image: ^3.0.2
   path_provider: ^2.0.11
   ffi: ^2.1.2

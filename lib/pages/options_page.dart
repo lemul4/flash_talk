@@ -56,7 +56,7 @@ class _OptionsPageState extends State<OptionsPage> {
           ),
           const Divider(),
           Text(
-            'Светочувствительность: ${SharedVariables.sensitivityValue.round()} м',
+            'Светочувствительность: ${SharedVariables.sensitivityValue.round()}',
           ),
           Slider(
             value: SharedVariables.sensitivityValue,
