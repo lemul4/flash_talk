@@ -10,7 +10,7 @@
         </intent>
     </queries>
     <application
-        android:label="flash_talk"
+        android:label="Morse camera"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

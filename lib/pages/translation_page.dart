@@ -2,13 +2,14 @@ import 'package:flash_talk/variables/shared_variables.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:auto_route/auto_route.dart';
-import 'package:flash_talk/routes/bottom_navigation_bar.dart';
 import 'dart:async';
 import 'package:flash_talk/logic/morse_translation.dart';
+import 'package:provider/provider.dart';
 import 'package:sound_generator/sound_generator.dart';
 import 'package:sound_generator/waveTypes.dart';
 import 'package:flash_talk/logic/morse_transmission.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import '../logic/theme_provider.dart';
 
 @RoutePage()
 class TranslationPage extends StatefulWidget {
@@ -18,19 +19,42 @@ class TranslationPage extends StatefulWidget {
   _TranslationPageState createState() => _TranslationPageState();
 }
 
-class _TranslationPageState extends State<TranslationPage> {
+class _TranslationPageState extends State<TranslationPage>
+    with SingleTickerProviderStateMixin {
   final SpeechToText _speechToText = SpeechToText();
   bool isListening = false;
-
+  late AnimationController _animationController;
+  late Animation<double> _animation;
   final MorseTransmitter beeping = MorseBeeping();
   final MorseTransmitter flashing = MorseFlashing();
 
   final inputText = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    SoundGenerator.init(sampleRate);
+    SoundGenerator.setFrequency(SharedVariables.frequency);
+    SoundGenerator.setBalance(balance);
+    SoundGenerator.setVolume(volume);
+    SoundGenerator.setWaveType(waveType);
+    _animationController = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    );
+    _animation = Tween<double>(begin: 0.0, end: 10.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
   void dispose() {
     flashing.isTransmitting.value = false;
     beeping.isTransmitting.value = false;
+    _animationController.dispose();
     flashing.dispose();
     beeping.dispose();
     super.dispose();
@@ -45,6 +69,7 @@ class _TranslationPageState extends State<TranslationPage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return ValueListenableBuilder<int>(
       valueListenable: SharedVariables.currentIndex,
       builder: (context, value, child) {
@@ -53,215 +78,247 @@ class _TranslationPageState extends State<TranslationPage> {
           beeping.isTransmitting.value = false;
         }
         return Scaffold(
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerFloat,
-          floatingActionButton: GestureDetector(
-            onTapUp: (details) {
-              setState(() {
-                isListening = false;
-              });
-              _speechToText.stop();
-            },
-            onTapDown: (details) async {
-              if (!isSwapped) {
-                if (!isListening) {
-                  var available = await _speechToText.initialize();
-                  if (available) {
-                    setState(() {
-                      isListening = true;
-                      String localeId =
-                      SharedVariables.selectedLanguage == 'Русский'
-                          ? 'ru_RU'
-                          : 'en_US';
-                      _speechToText.listen(
-                        onResult: (result) {
-                          setState(() {
-                            inputText.text = result.recognizedWords;
-                            translatedText = MorseTranslation.translateToMorse(
-                                inputText.text,
-                                SharedVariables.selectedLanguage);
-                          });
-                        },
-                        localeId: localeId,
-                      );
-                    });
-                  } else {
-                    setState(() {
-                      isListening = false;
-                    });
-                  }
-                }
-              }
-            },
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF1C1B1F), width: 10.0),
-              ),
-              child: CircleAvatar(
-                radius: 35.0,
-                backgroundColor: Colors.white,
-                child: Icon(isListening ? Icons.mic : Icons.mic_off,
-                    color: const Color(0xFF1C1B1F), size: 40.0),
-              ),
-            ),
-          ),
           appBar: AppBar(
             title: const Text('Перевод'),
             automaticallyImplyLeading: false,
           ),
           body: buildTranslationBody(),
-          bottomNavigationBar: const CustomBottomNavigationBar(),
         );
       },
     );
   }
 
   Widget buildTranslationBody() {
+    Color backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Stack(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildLanguageSelector(
-                  isSwapped ? 'Морзе' : SharedVariables.selectedLanguage),
-              IconButton(
-                icon: const Icon(Icons.swap_horiz),
-                onPressed: () {
-                  setState(() {
-                    inputText.text = '';
-                    translatedText = '';
-                    isSwapped = !isSwapped;
-                  });
-                },
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildLanguageSelector(
+                      isSwapped ? 'Морзе' : SharedVariables.selectedLanguage),
+                  IconButton(
+                    icon: const Icon(Icons.swap_horiz),
+                    onPressed: () {
+                      setState(() {
+                        inputText.text = '';
+                        translatedText = '';
+                        isSwapped = !isSwapped;
+                      });
+                    },
+                  ),
+                  _buildLanguageSelector(
+                      isSwapped ? SharedVariables.selectedLanguage : 'Морзе'),
+                ],
               ),
-              _buildLanguageSelector(
-                  isSwapped ? SharedVariables.selectedLanguage : 'Морзе'),
-            ],
-          ),
-          const SizedBox(height: 16.0),
-          Expanded(
-            child: TextField(
-              onChanged: (text) {
-                setState(() {
-                  if (isSwapped) {
-                    translatedText = MorseTranslation.translateFromMorse(
-                        text, SharedVariables.selectedLanguage);
-                  } else {
-                    translatedText = MorseTranslation.translateToMorse(
-                        text, SharedVariables.selectedLanguage);
-                  }
-                });
-              },
-              maxLines: null,
-              expands: true,
-              controller: inputText,
-              style: const TextStyle(fontSize: 18.0),
-              decoration: InputDecoration(
-                hintText: 'Введите текст',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
+              const SizedBox(height: 16.0),
+              Expanded(
+                child: TextField(
+                  onChanged: (text) {
                     setState(() {
-                      inputText.clear();
-                      translatedText = '';
+                      if (isSwapped) {
+                        translatedText = MorseTranslation.translateFromMorse(
+                            text, SharedVariables.selectedLanguage);
+                      } else {
+                        translatedText = MorseTranslation.translateToMorse(
+                            text, SharedVariables.selectedLanguage);
+                      }
                     });
                   },
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16.0),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.grey[800],
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Text(
-                        translatedText.isNotEmpty
-                            ? translatedText
-                            : 'Здесь будет перевод',
-                        style: const TextStyle(fontSize: 18.0),
-                      ),
+                  maxLines: null,
+                  expands: true,
+                  controller: inputText,
+                  style: const TextStyle(fontSize: 18.0),
+                  decoration: InputDecoration(
+                    hintText: 'Введите текст',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        setState(() {
+                          inputText.clear();
+                          translatedText = '';
+                        });
+                      },
                     ),
                   ),
-                  Column(
+                ),
+              ),
+              const SizedBox(height: 16.0),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: themeProvider.isDarkTheme
+                        ? Colors.grey[800]
+                        : Colors.grey[700],
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.copy),
-                        onPressed: () {
-                          Clipboard.setData(
-                              ClipboardData(text: translatedText));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Текст скопирован в буфер обмена'),
-                            ),
-                          );
-                        },
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Text(
+                            translatedText.isNotEmpty
+                                ? translatedText
+                                : 'Здесь будет перевод',
+                            style: const TextStyle(
+                                fontSize: 18.0, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                      Column(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.copy, color: Colors.white),
+                            onPressed: () {
+                              Clipboard.setData(
+                                  ClipboardData(text: translatedText));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content:
+                                      Text('Текст скопирован в буфер обмена'),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),
+                ),
+              ),
+              const SizedBox(height: 16.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  _buildIconButton(
+                      icon: Icons.volume_up,
+                      onPressed: () {
+                        SoundGenerator.setFrequency(SharedVariables.frequency);
+                        SoundGenerator.setWaveType(waveType);
+                        SoundGenerator.setBalance(balance);
+                        SoundGenerator.setVolume(volume);
+                        if (isSwapped) {
+                          beeping.transmit(inputText.text,
+                              SharedVariables.morseInterval, context);
+                        } else {
+                          beeping.transmit(translatedText,
+                              SharedVariables.morseInterval, context);
+                        }
+                      },
+                      valueListenable: beeping.isTransmitting),
+                  const SizedBox(width: 16.0),
+                  _buildIconButton(
+                      icon: Icons.highlight,
+                      onPressed: () {
+                        if (isSwapped) {
+                          flashing.transmit(
+                            inputText.text,
+                            SharedVariables.morseInterval,
+                            context,
+                          );
+                        } else {
+                          flashing.transmit(
+                            translatedText,
+                            SharedVariables.morseInterval,
+                            context,
+                          );
+                        }
+                      },
+                      valueListenable: flashing.isTransmitting),
                 ],
               ),
-            ),
-          ),
-          const SizedBox(height: 16.0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              _buildIconButton(
-                  icon: Icons.volume_up,
-                  onPressed: () {
-                    SoundGenerator.setFrequency(SharedVariables.frequency);
-                    SoundGenerator.setWaveType(waveType);
-                    SoundGenerator.setBalance(balance);
-                    SoundGenerator.setVolume(volume);
-                    if (isSwapped) {
-                      beeping.transmit(inputText.text,
-                          SharedVariables.morseInterval, context);
-                    } else {
-                      beeping.transmit(translatedText,
-                          SharedVariables.morseInterval, context);
-                    }
-                  },
-                  valueListenable: beeping.isTransmitting),
-              const SizedBox(width: 16.0),
-              _buildIconButton(
-                  icon: Icons.highlight,
-                  onPressed: () {
-                    if (isSwapped) {
-                      flashing.transmit(
-                        inputText.text,
-                        SharedVariables.morseInterval,
-                        context,
-                      );
-                    } else {
-                      flashing.transmit(
-                        translatedText,
-                        SharedVariables.morseInterval,
-                        context,
-                      );
-                    }
-                  },
-                  valueListenable: flashing.isTransmitting),
+              const SizedBox(height: 58.0),
             ],
           ),
+          Positioned(
+              bottom: 58,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: GestureDetector(
+                  onTapUp: (details) {
+                    setState(() {
+                      isListening = false;
+                    });
+                    _animationController.stop();
+                    _animationController.reset();
+                    _speechToText.stop();
+                  },
+                  onTapDown: (details) async {
+                    if (!isSwapped) {
+                      if (!isListening) {
+                        _animationController.repeat(reverse: true);
+                        var available = await _speechToText.initialize();
+                        if (available) {
+                          setState(() {
+                            isListening = true;
+                            String localeId =
+                                SharedVariables.selectedLanguage == 'Русский'
+                                    ? 'ru_RU'
+                                    : 'en_US';
+                            _speechToText.listen(
+                              onResult: (result) {
+                                setState(() {
+                                  inputText.text = result.recognizedWords;
+                                  translatedText =
+                                      MorseTranslation.translateToMorse(
+                                          inputText.text,
+                                          SharedVariables.selectedLanguage);
+                                });
+                              },
+                              localeId: localeId,
+                            );
+                          });
+                        } else {
+                          setState(() {
+                            isListening = false;
+                          });
+                        }
+                      }
+                    }
+                  },
+                  child: AnimatedBuilder(
+                    animation: _animation,
+                    builder: (context, child) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: backgroundColor,
+                            width: 10.0 + _animation.value / 4,
+                          ),
+                        ),
+                        child: CircleAvatar(
+                          radius: 35.0 + _animation.value,
+                          backgroundColor: themeProvider.isDarkTheme
+                              ? Colors.white
+                              : Colors.grey[900],
+                          child: Icon(
+                            isListening ? Icons.mic : Icons.mic_off,
+                            color: backgroundColor,
+                            size: 40.0 + _animation.value,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ))
         ],
       ),
     );
   }
 
   Widget _buildLanguageSelector(String language) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return Expanded(
       child: InkWell(
         onTap: () {
@@ -270,7 +327,10 @@ class _TranslationPageState extends State<TranslationPage> {
         child: Container(
           padding: const EdgeInsets.all(8.0),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.white),
+            border: Border.all(
+                color: themeProvider.isDarkTheme
+                    ? Colors.white
+                    : Colors.grey[800]!),
             borderRadius: BorderRadius.circular(8.0),
           ),
           child: Center(
@@ -318,6 +378,7 @@ class _TranslationPageState extends State<TranslationPage> {
       {required IconData icon,
       required VoidCallback onPressed,
       required valueListenable}) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return ValueListenableBuilder<bool>(
       valueListenable: valueListenable,
       builder: (context, value, child) {
@@ -329,27 +390,22 @@ class _TranslationPageState extends State<TranslationPage> {
             child: Container(
               padding: const EdgeInsets.all(8.0),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.white),
+                border: Border.all(
+                    color: themeProvider.isDarkTheme
+                        ? Colors.white
+                        : Colors.grey[800]!),
                 borderRadius: BorderRadius.circular(8.0),
               ),
               child: Icon(
                 value ? Icons.stop : icon,
-                color: Colors.white,
+                color: themeProvider.isDarkTheme
+                    ? Colors.white
+                    : Colors.grey[800]!,
               ),
             ),
           ),
         );
       },
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    SoundGenerator.init(sampleRate);
-    SoundGenerator.setFrequency(SharedVariables.frequency);
-    SoundGenerator.setBalance(balance);
-    SoundGenerator.setVolume(volume);
-    SoundGenerator.setWaveType(waveType);
   }
 }

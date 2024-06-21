@@ -2,8 +2,10 @@ import 'package:camera/camera.dart';
 import 'package:flash_talk/routes/bottom_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:auto_route/auto_route.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../logic/theme_provider.dart';
 import '../variables/shared_variables.dart';
 
 @RoutePage()
@@ -17,6 +19,7 @@ class OptionsPage extends StatefulWidget {
 class _OptionsPageState extends State<OptionsPage> {
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Настройки'),
@@ -25,6 +28,14 @@ class _OptionsPageState extends State<OptionsPage> {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
+          SwitchListTile(
+            title: const Text('Темная тема'),
+            value: themeProvider.isDarkTheme,
+            onChanged: (value) {
+              themeProvider.toggleTheme();
+            },
+          ),
+          const Divider(),
           Text(
             'Интервал Морзе: ${SharedVariables.morseInterval} мс',
           ),
@@ -87,7 +98,8 @@ class _OptionsPageState extends State<OptionsPage> {
             }).toList(),
             onChanged: (String? newValue) {
               setState(() {
-                SharedVariables.cameraResolution = stringToResolutionPreset(newValue);
+                SharedVariables.cameraResolution =
+                    stringToResolutionPreset(newValue);
               });
             },
           ),
@@ -95,35 +107,29 @@ class _OptionsPageState extends State<OptionsPage> {
           ElevatedButton(
             onPressed: () {
               setState(() {
-                // Здесь устанавливаются значения по умолчанию
                 SharedVariables.morseInterval = 150;
                 SharedVariables.frequency = 1000;
                 SharedVariables.sensitivityValue = 128.0;
                 SharedVariables.cameraResolution = ResolutionPreset.low;
-
               });
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white, // цвет кнопки
+              backgroundColor:
+                  themeProvider.isDarkTheme ? Colors.white : Colors.grey[900],
             ),
-            child: const Text(
+            child: Text(
               'Сбросить настройки',
-              style: TextStyle(color: Color(0xFF1C1B1F)), // цвет текста
+              style: TextStyle(
+                  color: themeProvider.isDarkTheme
+                      ? Colors.grey[900]
+                      : Colors.white),
             ),
-          ),
-          const Divider(),
-          const Text('Оцените проект на GitHub'),
-          TextButton(
-            onPressed: () {
-              launch('https://github.com/lemul4/flash_talk');
-            },
-            child: const Text('https://github.com/lemul4/flash_talk'),
           ),
         ],
       ),
-      bottomNavigationBar: const CustomBottomNavigationBar(),
     );
   }
+
   String resolutionPresetToString(ResolutionPreset preset) {
     switch (preset) {
       case ResolutionPreset.low:

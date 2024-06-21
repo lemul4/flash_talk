@@ -9,5 +9,4 @@ class SharedVariables {
   static String selectedLanguage = 'Русский';
   static double sensitivityValue = 128.0;
   static ResolutionPreset cameraResolution = ResolutionPreset.low;
-
 }
