@@ -4,7 +4,10 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flash_talk/variables/shared_variables.dart';
 
 class CustomBottomNavigationBar extends StatefulWidget {
-  const CustomBottomNavigationBar({super.key});
+  final Function(int) onTap;
+
+  const CustomBottomNavigationBar({super.key, required this.onTap});
+
   @override
   _CustomBottomNavigationBarState createState() =>
       _CustomBottomNavigationBarState();
@@ -19,7 +22,7 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
         return BottomNavigationBar(
           currentIndex: value,
           onTap: (index) {
-            SharedVariables.currentIndex.value = index;
+            widget.onTap(index);
             switch (index) {
               case 0:
                 context.router.navigate(const TranslationRoute());

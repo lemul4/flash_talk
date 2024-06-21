@@ -6,7 +6,6 @@ import 'package:flash_talk/routes/bottom_navigation_bar.dart';
 import 'package:flash_talk/variables/shared_variables.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'logic/theme_provider.dart';
 
 Future<void> main() async {
@@ -34,6 +33,7 @@ class MainPageView extends StatefulWidget {
 
 class _MainPageViewState extends State<MainPageView> {
   final _pageController = PageController();
+  bool _isBottomNavigationTapped = false;
 
   @override
   void initState() {
@@ -49,11 +49,21 @@ class _MainPageViewState extends State<MainPageView> {
   }
 
   void _onPageChanged() {
-    _pageController.animateToPage(
-      SharedVariables.currentIndex.value,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    if (_isBottomNavigationTapped) {
+      _pageController.jumpToPage(SharedVariables.currentIndex.value);
+      _isBottomNavigationTapped = false;
+    } else {
+      _pageController.animateToPage(
+        SharedVariables.currentIndex.value,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void onBottomNavigationTap(int index) {
+    _isBottomNavigationTapped = true;
+    SharedVariables.currentIndex.value = index;
   }
 
   @override
@@ -64,7 +74,9 @@ class _MainPageViewState extends State<MainPageView> {
           PageView(
             controller: _pageController,
             onPageChanged: (index) {
-              SharedVariables.currentIndex.value = index;
+              if (!_isBottomNavigationTapped) {
+                SharedVariables.currentIndex.value = index;
+              }
             },
             children: const [
               TranslationPage(),
@@ -72,11 +84,11 @@ class _MainPageViewState extends State<MainPageView> {
               OptionsPage(),
             ],
           ),
-          const Positioned(
+          Positioned(
             bottom: 0,
             left: 0,
             right: 0,
-            child: CustomBottomNavigationBar(),
+            child: CustomBottomNavigationBar(onTap: onBottomNavigationTap),
           ),
         ],
       ),

@@ -35,10 +35,8 @@ dependencies:
   torch_light: ^1.0.0
   sound_generator: ^0.0.9
   speech_to_text: ^6.6.1
-  url_launcher: ^6.2.6
   camera: ^0.11.0
   image: ^3.0.2
-
 
 dev_dependencies:
   flutter_test:

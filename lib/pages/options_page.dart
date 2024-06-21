@@ -1,10 +1,7 @@
 import 'package:camera/camera.dart';
-import 'package:flash_talk/routes/bottom_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
-
 import '../logic/theme_provider.dart';
 import '../variables/shared_variables.dart';
 
