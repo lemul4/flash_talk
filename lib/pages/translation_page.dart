@@ -69,7 +69,6 @@ class _TranslationPageState extends State<TranslationPage>
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
     return ValueListenableBuilder<int>(
       valueListenable: SharedVariables.currentIndex,
       builder: (context, value, child) {

@@ -413,17 +413,6 @@ class _DecodingPageState extends State<DecodingPage>
           }
         }
 
-        """img.Image outputImage = img.Image.fromBytes(
-          cameraImage!.width,
-          cameraImage!.height,
-          bytes,
-          format: img.Format.luminance,
-        );
-
-        outputImage = img.copyRotate(outputImage, 90);
-        Uint8List png = Uint8List.fromList(img.encodePng(outputImage));
-        _adjustedImg.value = png;""";
-
         if (DateTime.now().difference(startTime).inSeconds >= 1) {
           int fps =
               frameCount ~/ DateTime.now().difference(startTime).inSeconds;
